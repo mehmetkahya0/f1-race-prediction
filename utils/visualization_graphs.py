@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import random
+import datetime
 from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
 import os
@@ -16,6 +17,26 @@ import os
 GRAPH_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "visualized-graphs")
 if not os.path.exists(GRAPH_DIR):
     os.makedirs(GRAPH_DIR)
+
+def get_formatted_filename(base_name, track_name):
+    """
+    Generate a filename in the format 'graphtype_circuit_date'.
+    
+    Args:
+        base_name: Type of the graph (e.g., 'tire_degradation')
+        track_name: Name of the circuit
+    
+    Returns:
+        Formatted filename string
+    """
+    # Format the current date as YYYY-MM-DD
+    current_date = datetime.datetime.now().strftime("%Y-%m-%d")
+    
+    # Format the track name (remove spaces, lowercase)
+    formatted_track = track_name.lower().replace(" ", "_")
+    
+    # Combine in the requested format
+    return f"{base_name}_{formatted_track}_{current_date}"
 
 def plot_tire_degradation(laps, results, track_name):
     """
@@ -125,7 +146,10 @@ def plot_tire_degradation(laps, results, track_name):
     ax.add_artist(second_legend)
     
     plt.tight_layout()
-    save_path = os.path.join(GRAPH_DIR, 'tire_degradation.png')
+    
+    # Create filename with the new format
+    filename = get_formatted_filename("tire_degradation", track_name) + ".png"
+    save_path = os.path.join(GRAPH_DIR, filename)
     plt.savefig(save_path, dpi=300)
     return save_path
 
@@ -233,7 +257,10 @@ def plot_lap_time_progression(results, laps, track_name):
     plt.axvspan(laps * 0.7, laps, alpha=0.1, color='red', label='End Phase')
     
     plt.tight_layout()
-    save_path = os.path.join(GRAPH_DIR, 'lap_time_progression.png')
+    
+    # Create filename with the new format
+    filename = get_formatted_filename("lap_time", track_name) + ".png"
+    save_path = os.path.join(GRAPH_DIR, filename)
     plt.savefig(save_path, dpi=300)
     return save_path
 
@@ -308,7 +335,9 @@ def plot_driver_comparison(results, track_name):
     plt.legend(loc='upper right', bbox_to_anchor=(0.1, 0.1))
     plt.title(f'Driver Performance Comparison - {track_name}', size=20)
     
-    save_path = os.path.join(GRAPH_DIR, 'driver_comparison_radar.png')
+    # Create filename with the new format
+    filename = get_formatted_filename("driver_radar", track_name) + ".png"
+    save_path = os.path.join(GRAPH_DIR, filename)
     plt.savefig(save_path, dpi=300)
     
     # Additional bar chart comparing position gains/losses
@@ -329,17 +358,21 @@ def plot_driver_comparison(results, track_name):
     plt.grid(axis='y', alpha=0.3)
     
     plt.tight_layout()
-    save_path2 = os.path.join(GRAPH_DIR, 'position_changes.png')
+    
+    # Create filename with the new format
+    filename2 = get_formatted_filename("position_changes", track_name) + ".png"
+    save_path2 = os.path.join(GRAPH_DIR, filename2)
     plt.savefig(save_path2, dpi=300)
     
     return save_path, save_path2
 
-def plot_team_performance(results):
+def plot_team_performance(results, track_name):
     """
     Create visualization of team performance.
     
     Args:
         results: List of race results
+        track_name: Name of the track
     """
     # Extract team data
     teams = {}
@@ -391,7 +424,9 @@ def plot_team_performance(results):
     sns.heatmap(heatmap_data, annot=True, cmap='viridis', fmt='.1f', linewidths=.5)
     plt.title('Team Performance Metrics', size=16)
     
-    save_path = os.path.join(GRAPH_DIR, 'team_performance_heatmap.png') 
+    # Create filename with the new format
+    filename = get_formatted_filename("team_heatmap", track_name) + ".png"
+    save_path = os.path.join(GRAPH_DIR, filename)
     plt.savefig(save_path, dpi=300)
     
     # Team Points Bar Chart
@@ -427,7 +462,10 @@ def plot_team_performance(results):
         plt.text(i, points + 0.5, str(points), ha='center')
     
     plt.tight_layout()
-    save_path2 = os.path.join(GRAPH_DIR, 'team_points.png')
+    
+    # Create filename with the new format
+    filename2 = get_formatted_filename("team_points", track_name) + ".png"
+    save_path2 = os.path.join(GRAPH_DIR, filename2)
     plt.savefig(save_path2, dpi=300)
     
     return save_path, save_path2
@@ -458,7 +496,7 @@ def generate_all_visualizations(results, laps, track_name):
     visualizations['position_changes'] = position_chart
     
     print("Generating team performance charts...")
-    team_heatmap, team_points = plot_team_performance(results)
+    team_heatmap, team_points = plot_team_performance(results, track_name)
     visualizations['team_heatmap'] = team_heatmap
     visualizations['team_points'] = team_points
     

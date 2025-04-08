@@ -2,7 +2,7 @@
 
 A sophisticated Formula 1 race simulation tool that models and predicts F1 race outcomes with realistic parameters based on driver skills, team performance, track characteristics, and dynamic weather conditions.
 
-![F1 Simulation]([race_progress.png])
+![F1 Simulation](visualized-graphs/race_progress_monaco_2025-04-09.png)
 
 ## 🏎️ Features
 
@@ -12,6 +12,7 @@ A sophisticated Formula 1 race simulation tool that models and predicts F1 race 
 - **Advanced Race Strategy**: Models tire compounds, degradation, and pit stop strategies
 - **Race Incidents**: Simulates mechanical failures, driver errors, collisions, and other race-affecting events
 - **Detailed Analysis**: Provides in-depth statistics and visualizations of race results
+- **Advanced Visualizations**: Generates multiple graph types including tire degradation, lap times, driver comparisons, and team performance
 - **2025 Season Data**: Includes fictional data for the hypothetical 2025 F1 season
 
 ## 📊 Simulation Parameters
@@ -51,7 +52,7 @@ The simulation models numerous aspects of F1 racing:
 ### Prerequisites
 
 - Python 3.8+
-- Required packages: numpy, pandas, matplotlib, tabulate, colorama
+- Required packages: numpy, pandas, matplotlib, tabulate, colorama, seaborn
 
 ### Installation
 
@@ -63,7 +64,7 @@ cd f1-prediction
 
 2. Install dependencies:
 ```bash
-pip install numpy pandas matplotlib tabulate colorama
+pip install numpy pandas matplotlib tabulate colorama seaborn
 ```
 
 3. Run the simulator:
@@ -81,8 +82,44 @@ The application provides an interactive console interface:
 4. Explore various analysis options:
    - Compare qualifying and race performance
    - View detailed race statistics
-   - Visualize race progress
-   - Simulate additional races
+   - Visualize basic race progress
+   - Generate advanced visualizations
+   - Generate all visualizations at once
+
+### 📊 Visualization Types
+
+The simulator now offers multiple visualization types:
+
+1. **Race Progress Visualization**
+   - Shows position changes lap by lap
+   - Highlights pit stop windows
+   - Uses official F1 team colors
+   - Marks race phases (start, mid-race, finish)
+
+2. **Tire Degradation Chart**
+   - Models tire performance over race distance
+   - Shows different tire compounds (soft, medium, hard)
+   - Displays performance drop-off for each stint
+
+3. **Lap Time Progression**
+   - Tracks lap times throughout the race
+   - Shows effects of fuel load and tire wear
+   - Highlights pit stops and their effect on lap times
+
+4. **Driver Performance Radar Chart**
+   - Compares top drivers across multiple attributes
+   - Visualizes driver strengths and weaknesses
+   - Provides insights into race performance factors
+
+5. **Position Changes Chart**
+   - Shows positions gained or lost during the race
+   - Highlights over-performers and under-performers
+
+6. **Team Performance Analysis**
+   - Heatmap of key team performance metrics
+   - Bar chart of team points using official colors
+
+All visualizations are saved to the `visualized-graphs` folder with a consistent naming format: `graphtype_circuit_date.png`
 
 ## 📂 Project Structure
 
@@ -96,9 +133,11 @@ The application provides an interactive console interface:
 │   ├── race_model.py        # Race simulation engine
 │   ├── strategy.py          # Tire and pit stop strategy simulation
 │   └── weather.py           # Weather simulation system
-└── utils/                   # Utility modules
-    ├── stats.py             # Statistical analysis tools
-    └── visualization.py     # Data visualization functions
+├── utils/                   # Utility modules
+│   ├── stats.py             # Statistical analysis tools
+│   ├── visualization.py     # Basic visualization functions
+│   └── visualization_graphs.py # Advanced graph generation
+└── visualized-graphs/       # Directory containing generated visualizations
 ```
 
 ## 📈 Sample Output

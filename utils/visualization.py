@@ -9,6 +9,7 @@ import time
 import sys
 from colorama import init, Fore, Style
 import random
+import os
 # Initialize colorama for cross-platform colored terminal output
 init()
 
@@ -286,8 +287,20 @@ def plot_race_progress(results, laps):
     plt.suptitle('2025 F1 Race Position Progression', fontsize=18, fontweight='bold')
     
     plt.tight_layout()
-    plt.savefig('race_progress.png', dpi=300, bbox_inches='tight')
-    print(f"\n{Fore.GREEN}Enhanced race progress plot saved to 'race_progress.png'{Style.RESET_ALL}")
+    
+    # Import the helper function for consistent naming
+    from utils.visualization_graphs import get_formatted_filename
+    
+    # Extract track name from first result
+    track_name = next(iter(results)).team.name  # Fallback value
+    if hasattr(results[0], 'track_name'):
+        track_name = results[0].track_name
+        
+    # Create filename with the new format
+    filename = get_formatted_filename("race_progress", track_name) + ".png"
+    save_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "visualized-graphs", filename)
+    plt.savefig(save_path, dpi=300, bbox_inches='tight')
+    print(f"\n{Fore.GREEN}Enhanced race progress plot saved to '{filename}'{Style.RESET_ALL}")
 
 def simulate_live_race_progress(results, laps, track_name):
     """Simulate live race progress with animated console updates."""
