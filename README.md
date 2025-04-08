@@ -1,5 +1,5 @@
 # F1 Race Prediction Simulator
-
+![Visitors](https://api.visitorbadge.io/api/visitors?path=https%3A%2F%2Fgithub.com%2Fmehmetkahya0%2Ff1-race-prediction&label=VISITORS&labelColor=%23333333&countColor=%23f34324&style=flat)
 A sophisticated Formula 1 race simulation tool that models and predicts F1 race outcomes with realistic parameters based on driver skills, team performance, track characteristics, and dynamic weather conditions.
 
 ![F1 Simulation](race_progress.png)
