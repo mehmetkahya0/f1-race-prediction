@@ -30,6 +30,11 @@ from utils.visualization import (
     display_race_header, display_qualifying_results, display_race_results,
     plot_race_progress, simulate_live_race_progress
 )
+from utils.visualization_graphs import (
+    plot_tire_degradation, plot_lap_time_progression,
+    plot_driver_comparison, plot_team_performance,
+    generate_all_visualizations
+)
 from utils.stats import SeasonStats, analyze_qualifying_performance, calculate_performance_metrics
 
 
@@ -133,12 +138,14 @@ def show_analysis_menu(simulator, qualifying_results, race_results):
         print("\nAnalysis Options:")
         print("1. Show qualifying vs race performance analysis")
         print("2. Show detailed race statistics")
-        print("3. Visualize race progress")
-        print("4. Simulate another race")
-        print("5. Quit")
+        print("3. Visualize basic race progress")
+        print("4. Generate advanced visualizations")
+        print("5. Generate all visualizations (saves to visualized-graphs folder)")
+        print("6. Simulate another race")
+        print("7. Quit")
         
         try:
-            choice = input("\nSelect an option (1-5): ")
+            choice = input("\nSelect an option (1-7): ")
             choice = int(choice)
             
             if choice == 1:
@@ -164,11 +171,71 @@ def show_analysis_menu(simulator, qualifying_results, race_results):
                 simulate_live_race_progress(race_results, track.laps, track.name)
                 
             elif choice == 4:
+                # Advanced visualizations submenu
+                show_visualization_menu(race_results, track)
+                
+            elif choice == 5:
+                # Generate all visualizations
+                print("\nGenerating all visualizations...")
+                visualizations = generate_all_visualizations(race_results, track.laps, track.name)
+                print("\nAll visualizations saved to the 'visualized-graphs' folder:")
+                for viz_type, path in visualizations.items():
+                    print(f"- {viz_type}: {os.path.basename(path)}")
+                
+            elif choice == 6:
                 # Simulate another race
                 return True
                 
-            elif choice == 5:
+            elif choice == 7:
                 return False
+                
+            else:
+                print("Please enter a number between 1 and 7")
+                
+        except ValueError:
+            print("Please enter a valid number")
+
+
+def show_visualization_menu(race_results, track):
+    """Show submenu for advanced visualization options."""
+    while True:
+        print("\nAdvanced Visualization Options:")
+        print("1. Tire degradation chart")
+        print("2. Lap time progression")
+        print("3. Driver performance comparison")
+        print("4. Team performance analysis")
+        print("5. Return to main menu")
+        
+        try:
+            choice = input("\nSelect visualization type (1-5): ")
+            choice = int(choice)
+            
+            if choice == 1:
+                print("\nGenerating tire degradation visualization...")
+                path = plot_tire_degradation(track.laps, race_results, track.name)
+                print(f"Visualization saved to: {path}")
+                
+            elif choice == 2:
+                print("\nGenerating lap time progression visualization...")
+                path = plot_lap_time_progression(race_results, track.laps, track.name)
+                print(f"Visualization saved to: {path}")
+                
+            elif choice == 3:
+                print("\nGenerating driver comparison visualizations...")
+                paths = plot_driver_comparison(race_results, track.name)
+                print(f"Visualizations saved to:")
+                for path in paths:
+                    print(f"- {path}")
+                    
+            elif choice == 4:
+                print("\nGenerating team performance visualizations...")
+                paths = plot_team_performance(race_results)
+                print(f"Visualizations saved to:")
+                for path in paths:
+                    print(f"- {path}")
+                    
+            elif choice == 5:
+                return
                 
             else:
                 print("Please enter a number between 1 and 5")
@@ -212,11 +279,12 @@ if __name__ == "__main__":
         import matplotlib
         import tabulate
         import colorama
+        import seaborn
     except ImportError:
         print("Missing required packages. Installing dependencies...")
         import subprocess
         subprocess.call([sys.executable, "-m", "pip", "install", 
-                        "numpy", "pandas", "matplotlib", "tabulate", "colorama"])
+                        "numpy", "pandas", "matplotlib", "tabulate", "colorama", "seaborn"])
         print("Dependencies installed. Starting application...")
     
     main()
