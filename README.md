@@ -2,7 +2,7 @@
 
 A sophisticated Formula 1 race simulation tool that models and predicts F1 race outcomes with realistic parameters based on driver skills, team performance, track characteristics, and dynamic weather conditions.
 
-![F1 Simulation](https://raw.githubusercontent.com/mehmetkahya0/f1-prediction/main/race_progress.png)
+![F1 Simulation]([race_progress.png])
 
 ## 🏎️ Features
 
