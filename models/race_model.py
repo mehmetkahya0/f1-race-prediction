@@ -175,27 +175,33 @@ class RaceSimulator:
     def _simulate_incidents(self, driver, team, lap, total_laps):
         """Simulate race incidents for a driver."""
         # Base chance of incident per lap
-        base_incident_chance = 0.0005  # 0.05% chance of incident per lap per driver
+        base_incident_chance = 0.001  # 0.1% chance of incident per lap per driver (2x increased from original)
         
         # Adjust for driver consistency (inconsistent drivers have more incidents)
-        driver_incident_factor = 1 - (driver.consistency / 100)
+        driver_incident_factor = 2.0 - (driver.consistency / 100 * 1.5)
         
-        # Adjust for car reliability
-        car_incident_factor = 1 - (team.reliability / 100)
+        # Adjust for car reliability - more significant impact
+        car_incident_factor = 2.0 - (team.reliability / 100 * 1.7)
         
         # Weather factor - more incidents in wet conditions
         if self.weather.condition == 'wet':
-            weather_factor = 3.0
+            weather_factor = 4.0
         elif self.weather.condition == 'mixed':
-            weather_factor = 1.8
+            weather_factor = 2.5
         else:
             weather_factor = 1.0
             
-        # First lap has higher incident chance
-        first_lap_factor = 5.0 if lap < 3 else 1.0
+        # First lap has higher incident chance - increased to be more realistic
+        first_lap_factor = 8.0 if lap < 3 else 1.0
         
         # Last laps have slightly higher incident chance due to fatigue/desperate moves
-        last_lap_factor = 1.5 if lap > total_laps * 0.9 else 1.0
+        last_lap_factor = 2.0 if lap > total_laps * 0.8 else 1.0
+        
+        # Driver experience factor - rookies have more incidents
+        exp_factor = 1.5 if driver.experience < 2 else 1.0
+        
+        # Aggressive drivers have more incidents
+        aggression_factor = 1.0 + (driver.aggression / 100 * 0.8)
         
         # Calculate incident chance for this lap
         incident_chance = (base_incident_chance * 
@@ -203,7 +209,12 @@ class RaceSimulator:
                           car_incident_factor * 
                           weather_factor * 
                           first_lap_factor * 
-                          last_lap_factor)
+                          last_lap_factor * 
+                          exp_factor *
+                          aggression_factor)
+        
+        # Safety cap to avoid unrealistic incident rates
+        incident_chance = min(incident_chance, 0.15)  # Max 15% chance per lap
         
         # Check if incident occurs
         if random.random() < incident_chance:
