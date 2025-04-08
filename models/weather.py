@@ -75,8 +75,23 @@ def generate_weather(track, month=None, forced_condition=None):
     if month is None:
         # Extract month from track date
         import datetime
-        date = datetime.datetime.strptime(track.date, "%B %d, %Y")
-        month = date.month
+        import re
+        
+        # Handle date format like "April 4-6, 2025"
+        # Extract just the month name using regex
+        month_match = re.match(r'(\w+)\s+\d+', track.date)
+        if month_match:
+            month_name = month_match.group(1)
+            # Convert month name to month number
+            month_dict = {
+                'January': 1, 'February': 2, 'March': 3, 'April': 4,
+                'May': 5, 'June': 6, 'July': 7, 'August': 8,
+                'September': 9, 'October': 10, 'November': 11, 'December': 12
+            }
+            month = month_dict.get(month_name, datetime.datetime.now().month)
+        else:
+            # Fallback to current month if parsing fails
+            month = datetime.datetime.now().month
     
     # Weather probabilities based on location and month
     if forced_condition:

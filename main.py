@@ -87,22 +87,25 @@ def select_weather_option(track):
     print("4. Mixed conditions")
     
     while True:
-        try:
-            choice = input("\nSelect an option (1-4): ")
-            choice = int(choice)
+        choice = input("\nSelect an option (1-4): ")
+        
+        # Strip any whitespace and check if it's a digit
+        choice = choice.strip()
+        if choice.isdigit():
+            choice_num = int(choice)
             
-            if choice == 1:
+            if choice_num == 1:
                 return generate_weather(track)
-            elif choice == 2:
+            elif choice_num == 2:
                 return generate_weather(track, forced_condition="dry")
-            elif choice == 3:
+            elif choice_num == 3:
                 return generate_weather(track, forced_condition="wet")
-            elif choice == 4:
+            elif choice_num == 4:
                 return generate_weather(track, forced_condition="mixed")
             else:
                 print("Please enter a number between 1 and 4")
-        except ValueError:
-            print("Please enter a valid number")
+        else:
+            print("Please enter a valid number (1-4)")
 
 
 def run_race_simulation(track, weather_option):

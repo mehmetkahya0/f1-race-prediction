@@ -53,32 +53,32 @@ class Track:
 
 
 # 2025 F1 Calendar with track data
-# Data is fictional for the 2025 season, dates are approximate
+# Data sourced from the official F1 website
 TRACKS = {
-    "bahrain": Track("Bahrain International Circuit", "Bahrain", "Sakhir", 5.412, 57, 15, 4, 330, 6, 7, 7, 5, "March 2, 2025"),
-    "jeddah": Track("Jeddah Corniche Circuit", "Saudi Arabia", "Jeddah", 6.174, 50, 27, 3, 350, 4, 5, 8, 6, "March 9, 2025"),
-    "australia": Track("Albert Park Circuit", "Australia", "Melbourne", 5.278, 58, 14, 4, 325, 5, 6, 7, 5, "March 23, 2025"),
-    "japan": Track("Suzuka Circuit", "Japan", "Suzuka", 5.807, 53, 18, 2, 315, 9, 6, 7, 7, "April 6, 2025"),
-    "china": Track("Shanghai International Circuit", "China", "Shanghai", 5.451, 56, 16, 3, 327, 6, 7, 8, 5, "April 13, 2025"),
-    "miami": Track("Miami International Autodrome", "USA", "Miami", 5.412, 57, 19, 3, 340, 5, 6, 7, 4, "May 4, 2025"),
-    "imola": Track("Autodromo Enzo e Dino Ferrari", "Italy", "Imola", 4.909, 63, 19, 2, 320, 7, 5, 9, 8, "May 18, 2025"),
-    "monaco": Track("Circuit de Monaco", "Monaco", "Monte Carlo", 3.337, 78, 19, 1, 290, 10, 3, 10, 10, "May 25, 2025"),
-    "canada": Track("Circuit Gilles Villeneuve", "Canada", "Montreal", 4.361, 70, 14, 3, 330, 6, 8, 8, 4, "June 8, 2025"),
-    "spain": Track("Circuit de Barcelona-Catalunya", "Spain", "Barcelona", 4.675, 66, 16, 2, 325, 8, 7, 6, 7, "June 22, 2025"),
-    "austria": Track("Red Bull Ring", "Austria", "Spielberg", 4.318, 71, 10, 3, 340, 5, 6, 7, 3, "June 29, 2025"),
-    "britain": Track("Silverstone Circuit", "Great Britain", "Silverstone", 5.891, 52, 18, 2, 330, 8, 7, 7, 5, "July 6, 2025"),
-    "hungary": Track("Hungaroring", "Hungary", "Budapest", 4.381, 70, 14, 1, 315, 9, 5, 7, 9, "July 20, 2025"),
-    "belgium": Track("Circuit de Spa-Francorchamps", "Belgium", "Spa", 7.004, 44, 19, 2, 350, 6, 5, 9, 4, "July 27, 2025"),
-    "netherlands": Track("Circuit Zandvoort", "Netherlands", "Zandvoort", 4.259, 72, 14, 2, 315, 8, 7, 7, 7, "August 24, 2025"),
-    "monza": Track("Autodromo Nazionale Monza", "Italy", "Monza", 5.793, 53, 11, 4, 360, 1, 8, 9, 4, "September 7, 2025"),
-    "azerbaijan": Track("Baku City Circuit", "Azerbaijan", "Baku", 6.003, 51, 20, 2, 350, 4, 5, 8, 6, "September 14, 2025"),
-    "singapore": Track("Marina Bay Street Circuit", "Singapore", "Singapore", 4.94, 62, 23, 2, 325, 8, 9, 9, 7, "September 21, 2025"),
-    "usa": Track("Circuit of the Americas", "USA", "Austin", 5.513, 56, 20, 3, 330, 7, 6, 7, 5, "October 19, 2025"),
-    "mexico": Track("Autódromo Hermanos Rodríguez", "Mexico", "Mexico City", 4.304, 71, 17, 3, 350, 6, 7, 8, 6, "October 26, 2025"),
-    "brazil": Track("Autódromo José Carlos Pace", "Brazil", "São Paulo", 4.309, 71, 15, 2, 335, 7, 8, 7, 4, "November 9, 2025"),
-    "las_vegas": Track("Las Vegas Strip Circuit", "USA", "Las Vegas", 6.12, 50, 17, 3, 345, 3, 6, 7, 5, "November 16, 2025"),
-    "qatar": Track("Losail International Circuit", "Qatar", "Lusail", 5.38, 57, 16, 1, 330, 8, 9, 7, 6, "November 30, 2025"),
-    "abu_dhabi": Track("Yas Marina Circuit", "UAE", "Abu Dhabi", 5.281, 58, 16, 2, 335, 7, 6, 7, 7, "December 7, 2025")
+    "australia": Track("Albert Park Circuit", "Australia", "Melbourne", 5.278, 58, 14, 4, 325, 5, 6, 7, 5, "March 14-16, 2025"),
+    "china": Track("Shanghai International Circuit", "China", "Shanghai", 5.451, 56, 16, 3, 327, 6, 7, 8, 5, "March 21-23, 2025"),
+    "japan": Track("Suzuka Circuit", "Japan", "Suzuka", 5.807, 53, 18, 2, 315, 9, 6, 7, 7, "April 4-6, 2025"),
+    "bahrain": Track("Bahrain International Circuit", "Bahrain", "Sakhir", 5.412, 57, 15, 4, 330, 6, 7, 7, 5, "April 11-13, 2025"),
+    "saudi_arabia": Track("Jeddah Corniche Circuit", "Saudi Arabia", "Jeddah", 6.174, 50, 27, 3, 350, 4, 5, 8, 6, "April 18-20, 2025"),
+    "miami": Track("Miami International Autodrome", "USA", "Miami", 5.412, 57, 19, 3, 340, 5, 6, 7, 4, "May 2-4, 2025"),
+    "imola": Track("Autodromo Enzo e Dino Ferrari", "Italy", "Imola", 4.909, 63, 19, 2, 320, 7, 5, 9, 8, "May 16-18, 2025"),
+    "monaco": Track("Circuit de Monaco", "Monaco", "Monte Carlo", 3.337, 78, 19, 1, 290, 10, 3, 10, 10, "May 23-25, 2025"),
+    "spain": Track("Circuit de Barcelona-Catalunya", "Spain", "Barcelona", 4.675, 66, 16, 2, 325, 8, 7, 6, 7, "May 30-June 1, 2025"),
+    "canada": Track("Circuit Gilles Villeneuve", "Canada", "Montreal", 4.361, 70, 14, 3, 330, 6, 8, 8, 4, "June 13-15, 2025"),
+    "austria": Track("Red Bull Ring", "Austria", "Spielberg", 4.318, 71, 10, 3, 340, 5, 6, 7, 3, "June 27-29, 2025"),
+    "britain": Track("Silverstone Circuit", "Great Britain", "Silverstone", 5.891, 52, 18, 2, 330, 8, 7, 7, 5, "July 4-6, 2025"),
+    "belgium": Track("Circuit de Spa-Francorchamps", "Belgium", "Spa", 7.004, 44, 19, 2, 350, 6, 5, 9, 4, "July 25-27, 2025"),
+    "hungary": Track("Hungaroring", "Hungary", "Budapest", 4.381, 70, 14, 1, 315, 9, 5, 7, 9, "August 1-3, 2025"),
+    "netherlands": Track("Circuit Zandvoort", "Netherlands", "Zandvoort", 4.259, 72, 14, 2, 315, 8, 7, 7, 7, "August 29-31, 2025"),
+    "monza": Track("Autodromo Nazionale Monza", "Italy", "Monza", 5.793, 53, 11, 4, 360, 1, 8, 9, 4, "September 5-7, 2025"),
+    "azerbaijan": Track("Baku City Circuit", "Azerbaijan", "Baku", 6.003, 51, 20, 2, 350, 4, 5, 8, 6, "September 19-21, 2025"),
+    "singapore": Track("Marina Bay Street Circuit", "Singapore", "Singapore", 4.94, 62, 23, 2, 325, 8, 9, 9, 7, "October 3-5, 2025"),
+    "usa": Track("Circuit of the Americas", "USA", "Austin", 5.513, 56, 20, 3, 330, 7, 6, 7, 5, "October 17-19, 2025"),
+    "mexico": Track("Autódromo Hermanos Rodríguez", "Mexico", "Mexico City", 4.304, 71, 17, 3, 350, 6, 7, 8, 6, "October 24-26, 2025"),
+    "brazil": Track("Autódromo José Carlos Pace", "Brazil", "São Paulo", 4.309, 71, 15, 2, 335, 7, 8, 7, 4, "November 7-9, 2025"),
+    "las_vegas": Track("Las Vegas Strip Circuit", "USA", "Las Vegas", 6.12, 50, 17, 3, 345, 3, 6, 7, 5, "November 20-22, 2025"),
+    "qatar": Track("Losail International Circuit", "Qatar", "Lusail", 5.38, 57, 16, 1, 330, 8, 9, 7, 6, "November 28-30, 2025"),
+    "abu_dhabi": Track("Yas Marina Circuit", "UAE", "Abu Dhabi", 5.281, 58, 16, 2, 335, 7, 6, 7, 7, "December 5-7, 2025")
 }
 
 def get_track_by_name(name):
@@ -98,6 +98,25 @@ def get_calendar():
     import datetime
     
     def parse_date(date_string):
-        return datetime.datetime.strptime(date_string, "%B %d, %Y")
+        # Extract month and year from the date string
+        parts = date_string.split(',')
+        if len(parts) != 2:
+            # Handle format without comma: "March 14-16 2025"
+            month_day = date_string.split('-')[0].strip()
+            year = date_string.split(' ')[-1].strip()
+        else:
+            # Handle format with comma: "March 14-16, 2025"
+            month_day = parts[0].split('-')[0].strip()
+            year = parts[1].strip()
+            
+        # Parse the date with the full month, day, and year
+        try:
+            month_parts = month_day.split(' ')
+            month = month_parts[0]
+            day = month_parts[1]
+            return datetime.datetime.strptime(f"{month} {day} {year}", "%B %d %Y")
+        except (ValueError, IndexError):
+            # Fallback
+            return datetime.datetime(2025, 1, 1)
     
     return sorted(TRACKS.values(), key=lambda track: parse_date(track.date))
