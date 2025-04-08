@@ -27,7 +27,7 @@ class Team:
 
 
 # 2025 F1 Teams with realistic attributes
-# Data is fictional for the 2025 season
+# Data is fictional for the 2025 season, but team names are up-to-date
 TEAMS = {
     "red_bull": Team("Red Bull Racing", "Red Bull", "Red Bull Powertrains", 95, 92, 94, 93, 97, 94),
     "ferrari": Team("Ferrari", "Ferrari", "Ferrari", 93, 88, 92, 90, 93, 95),
@@ -36,8 +36,8 @@ TEAMS = {
     "aston_martin": Team("Aston Martin", "Aston Martin", "Mercedes", 88, 86, 90, 87, 89, 93),
     "alpine": Team("Alpine", "Alpine", "Renault", 84, 82, 88, 85, 86, 87),
     "williams": Team("Williams", "Williams", "Mercedes", 83, 85, 87, 86, 85, 93),
-    "rb": Team("RB", "RB", "Red Bull Powertrains", 82, 87, 85, 85, 84, 94),
-    "sauber": Team("Sauber", "Sauber", "Ferrari", 80, 83, 84, 80, 82, 95),
+    "racing_bulls": Team("Racing Bulls", "Racing Bulls", "Red Bull Powertrains", 82, 87, 85, 85, 84, 94),
+    "kick_sauber": Team("Kick Sauber", "Sauber", "Ferrari", 80, 83, 84, 80, 82, 95),
     "haas": Team("Haas", "Haas", "Ferrari", 81, 80, 81, 82, 83, 95)
 }
 

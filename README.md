@@ -120,28 +120,14 @@ RACE RESULTS
 |  1  | Max Verstappen   | Red Bull Racing|   1   | →      | 01:42:23.456    | 25  |
 |  2  | Charles Leclerc  | Ferrari        |   2   | →      | 01:42:28.791    | 18  |
 |  3  | Lando Norris     | McLaren        |   4   | ↑1     | 01:42:34.102 FL | 16  |
-|  4  | Lewis Hamilton   | Mercedes       |   3   | ↓1     | 01:42:39.889    | 12  |
+|  4  | Lewis Hamilton   | Ferrari        |   3   | ↓1     | 01:42:39.889    | 12  |
 |  5  | George Russell   | Mercedes       |   5   | →      | 01:42:45.231    | 10  |
 |  6  | Oscar Piastri    | McLaren        |   7   | ↑1     | 01:42:50.778    | 8   |
 |  7  | Fernando Alonso  | Aston Martin   |   6   | ↓1     | 01:42:55.446    | 6   |
 |  8  | Carlos Sainz     | Williams       |   8   | →      | 01:43:02.112    | 4   |
-|  9  | Nico Hulkenberg  | Haas           |  13   | ↑4     | 01:43:10.993    | 2   |
-| 10  | Yuki Tsunoda     | RB             |  10   | →      | 01:43:15.776    | 1   |
-| 11  | Valtteri Bottas  | Sauber         |  11   | →      | 01:43:20.444    |     |
-| 12  | Alexander Albon  | Williams       |  12   | →      | 01:43:28.112    |     |
-| 13  | Pierre Gasly     | Alpine         |  14   | ↑1     | 01:43:35.776    |     |
-| 14  | Oliver Bearman   | Ferrari        |  16   | ↑2     | 01:43:42.329    |     |
-| 15  | Franco Colapinto | Haas           |  18   | ↑3     | 01:43:50.112    |     |
-| 16  | Esteban Ocon     | Alpine         |  15   | ↓1     | 01:44:05.776    |     |
-| 17  | Liam Lawson      | RB             |  20   | ↑3     | 01:44:15.121    |     |
-| 18  | Lance Stroll     | Aston Martin   |   9   | ↓9     | DNF             |     |
-| 19  | Guanyu Zhou      | Sauber         |  17   | ↓2     | DNF             |     |
-| 20  | Sergio Perez     | Red Bull Racing|  19   | ↓1     | DNF             |     |
-
-RACE INCIDENTS:
-  • Lap Engine failure for Sergio Perez
-  • Lap Collision damage forces Lance Stroll to retire
-  • Lap Hydraulic system failure for Guanyu Zhou
+|  9  | Esteban Ocon     | Haas           |  13   | ↑4     | 01:43:10.993    | 2   |
+| 10  | Yuki Tsunoda     | Red Bull Racing|  10   | →      | 01:43:15.776    | 1   |
+| 11  | Gabriel Bortoleto| Kick Sauber    |  11   | →      | 01:43:20.444    |     |
 ```
 
 ## 🔧 Customization

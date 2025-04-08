@@ -30,28 +30,28 @@ class Driver:
 
 
 # 2025 F1 Drivers with realistic attributes
-# Data is fictional for the 2025 season
+# Data is fictional for the 2025 season, but teams and drivers are up-to-date
 DRIVERS = {
     "verstappen": Driver("Max Verstappen", "Red Bull Racing", 1, "Dutch", 28, 11, 95, 98, 95, 92, 85),
-    "perez": Driver("Sergio Perez", "Red Bull Racing", 11, "Mexican", 35, 15, 85, 88, 86, 83, 80),
+    "tsunoda": Driver("Yuki Tsunoda", "Red Bull Racing", 22, "Japanese", 25, 5, 84, 85, 83, 80, 86),
     "leclerc": Driver("Charles Leclerc", "Ferrari", 16, "Monegasque", 28, 8, 92, 95, 90, 88, 82),
-    "sainz": Driver("Carlos Sainz", "Williams", 55, "Spanish", 31, 11, 90, 92, 89, 90, 78),
-    "hamilton": Driver("Lewis Hamilton", "Mercedes", 44, "British", 40, 19, 95, 96, 92, 94, 75),
+    "hamilton": Driver("Lewis Hamilton", "Ferrari", 44, "British", 40, 19, 95, 96, 92, 94, 75),
     "russell": Driver("George Russell", "Mercedes", 63, "British", 27, 6, 90, 93, 88, 89, 83),
+    "antonelli": Driver("Kimi Antonelli", "Mercedes", 87, "Italian", 19, 0, 82, 85, 83, 80, 88),
     "norris": Driver("Lando Norris", "McLaren", 4, "British", 26, 7, 91, 94, 90, 91, 80),
     "piastri": Driver("Oscar Piastri", "McLaren", 81, "Australian", 24, 3, 88, 90, 87, 86, 82),
     "alonso": Driver("Fernando Alonso", "Aston Martin", 14, "Spanish", 44, 24, 93, 94, 92, 90, 88),
     "stroll": Driver("Lance Stroll", "Aston Martin", 18, "Canadian", 26, 9, 82, 85, 80, 79, 75),
-    "bearman": Driver("Oliver Bearman", "Ferrari", 50, "British", 20, 1, 83, 86, 84, 80, 85),
     "gasly": Driver("Pierre Gasly", "Alpine", 10, "French", 29, 9, 87, 88, 86, 85, 80),
-    "ocon": Driver("Esteban Ocon", "Alpine", 31, "French", 29, 9, 86, 87, 85, 84, 82),
-    "bottas": Driver("Valtteri Bottas", "Sauber", 77, "Finnish", 36, 13, 88, 90, 83, 86, 75),
-    "zhou": Driver("Guanyu Zhou", "Sauber", 24, "Chinese", 26, 4, 80, 82, 80, 78, 76),
-    "tsunoda": Driver("Yuki Tsunoda", "RB", 22, "Japanese", 25, 5, 84, 85, 83, 80, 86),
-    "lawson": Driver("Liam Lawson", "RB", 15, "New Zealander", 23, 2, 82, 85, 84, 80, 84),
+    "doohan": Driver("Jack Doohan", "Alpine", 5, "Australian", 21, 0, 81, 83, 82, 78, 84),
+    "hulkenberg": Driver("Nico Hulkenberg", "Kick Sauber", 27, "German", 38, 12, 87, 88, 85, 86, 78),
+    "bortoleto": Driver("Gabriel Bortoleto", "Kick Sauber", 20, "Brazilian", 20, 0, 80, 83, 82, 77, 84),
+    "lawson": Driver("Liam Lawson", "Racing Bulls", 15, "New Zealander", 23, 2, 82, 85, 84, 80, 84),
+    "hadjar": Driver("Isack Hadjar", "Racing Bulls", 38, "French", 19, 0, 79, 82, 81, 78, 85),
     "albon": Driver("Alexander Albon", "Williams", 23, "Thai", 29, 7, 86, 88, 85, 84, 79),
-    "colapinto": Driver("Franco Colapinto", "Haas", 43, "Argentinian", 22, 1, 80, 83, 82, 78, 85),
-    "hulkenberg": Driver("Nico Hulkenberg", "Haas", 27, "German", 38, 12, 87, 88, 85, 86, 78)
+    "sainz": Driver("Carlos Sainz", "Williams", 55, "Spanish", 31, 11, 90, 92, 89, 90, 78),
+    "ocon": Driver("Esteban Ocon", "Haas", 31, "French", 29, 9, 86, 87, 85, 84, 82),
+    "bearman": Driver("Oliver Bearman", "Haas", 50, "British", 20, 1, 83, 86, 84, 80, 85)
 }
 
 def get_driver_by_name(name):
