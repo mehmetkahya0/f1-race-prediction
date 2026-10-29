@@ -1,0 +1,226 @@
+<svg class="rich-terminal" viewBox="0 0 1287 1099.2" xmlns="http://www.w3.org/2000/svg">
+    <!-- Generated with Rich https://www.textualize.io -->
+    <style>
+
+    @font-face {
+        font-family: "Fira Code";
+        src: local("FiraCode-Regular"),
+                url("https://cdnjs.cloudflare.com/ajax/libs/firacode/6.2.0/woff2/FiraCode-Regular.woff2") format("woff2"),
+                url("https://cdnjs.cloudflare.com/ajax/libs/firacode/6.2.0/woff/FiraCode-Regular.woff") format("woff");
+        font-style: normal;
+        font-weight: 400;
+    }
+    @font-face {
+        font-family: "Fira Code";
+        src: local("FiraCode-Bold"),
+                url("https://cdnjs.cloudflare.com/ajax/libs/firacode/6.2.0/woff2/FiraCode-Bold.woff2") format("woff2"),
+                url("https://cdnjs.cloudflare.com/ajax/libs/firacode/6.2.0/woff/FiraCode-Bold.woff") format("woff");
+        font-style: bold;
+        font-weight: 700;
+    }
+
+    .terminal-3500179698-matrix {
+        font-family: Fira Code, monospace;
+        font-size: 20px;
+        line-height: 24.4px;
+        font-variant-east-asian: full-width;
+    }
+
+    .terminal-3500179698-title {
+        font-size: 18px;
+        font-weight: bold;
+        font-family: arial;
+    }
+
+    .terminal-3500179698-r1 { fill: #c5c8c6 }
+    </style>
+
+    <defs>
+    <clipPath id="terminal-3500179698-clip-terminal">
+      <rect x="0" y="0" width="1267.8" height="1048.2" />
+    </clipPath>
+    <clipPath id="terminal-3500179698-line-0">
+    <rect x="0" y="1.5" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-1">
+    <rect x="0" y="25.9" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-2">
+    <rect x="0" y="50.3" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-3">
+    <rect x="0" y="74.7" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-4">
+    <rect x="0" y="99.1" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-5">
+    <rect x="0" y="123.5" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-6">
+    <rect x="0" y="147.9" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-7">
+    <rect x="0" y="172.3" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-8">
+    <rect x="0" y="196.7" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-9">
+    <rect x="0" y="221.1" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-10">
+    <rect x="0" y="245.5" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-11">
+    <rect x="0" y="269.9" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-12">
+    <rect x="0" y="294.3" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-13">
+    <rect x="0" y="318.7" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-14">
+    <rect x="0" y="343.1" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-15">
+    <rect x="0" y="367.5" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-16">
+    <rect x="0" y="391.9" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-17">
+    <rect x="0" y="416.3" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-18">
+    <rect x="0" y="440.7" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-19">
+    <rect x="0" y="465.1" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-20">
+    <rect x="0" y="489.5" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-21">
+    <rect x="0" y="513.9" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-22">
+    <rect x="0" y="538.3" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-23">
+    <rect x="0" y="562.7" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-24">
+    <rect x="0" y="587.1" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-25">
+    <rect x="0" y="611.5" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-26">
+    <rect x="0" y="635.9" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-27">
+    <rect x="0" y="660.3" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-28">
+    <rect x="0" y="684.7" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-29">
+    <rect x="0" y="709.1" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-30">
+    <rect x="0" y="733.5" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-31">
+    <rect x="0" y="757.9" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-32">
+    <rect x="0" y="782.3" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-33">
+    <rect x="0" y="806.7" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-34">
+    <rect x="0" y="831.1" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-35">
+    <rect x="0" y="855.5" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-36">
+    <rect x="0" y="879.9" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-37">
+    <rect x="0" y="904.3" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-38">
+    <rect x="0" y="928.7" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-39">
+    <rect x="0" y="953.1" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-40">
+    <rect x="0" y="977.5" width="1268.8" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-3500179698-line-41">
+    <rect x="0" y="1001.9" width="1268.8" height="24.65"/>
+            </clipPath>
+    </defs>
+
+    <rect fill="#292929" stroke="rgba(255,255,255,0.35)" stroke-width="1" x="1" y="1" width="1285" height="1097.2" rx="8"/><text class="terminal-3500179698-title" fill="#c5c8c6" text-anchor="middle" x="642" y="27">python&#160;main.py</text>
+            <g transform="translate(26,22)">
+            <circle cx="0" cy="0" r="7" fill="#ff5f57"/>
+            <circle cx="22" cy="0" r="7" fill="#febc2e"/>
+            <circle cx="44" cy="0" r="7" fill="#28c840"/>
+            </g>
+        
+    <g transform="translate(9, 41)" clip-path="url(#terminal-3500179698-clip-terminal)">
+    
+    <g class="terminal-3500179698-matrix">
+    <text class="terminal-3500179698-r1" x="0" y="20" textLength="976" clip-path="url(#terminal-3500179698-line-0)">================================================================================</text><text class="terminal-3500179698-r1" x="1268.8" y="20" textLength="12.2" clip-path="url(#terminal-3500179698-line-0)">
+</text><text class="terminal-3500179698-r1" x="0" y="44.4" textLength="597.8" clip-path="url(#terminal-3500179698-line-1)">FORMULA&#160;1&#160;RACE&#160;PREDICTION&#160;SIMULATOR&#160;-&#160;2026&#160;SEASON</text><text class="terminal-3500179698-r1" x="1268.8" y="44.4" textLength="12.2" clip-path="url(#terminal-3500179698-line-1)">
+</text><text class="terminal-3500179698-r1" x="0" y="68.8" textLength="976" clip-path="url(#terminal-3500179698-line-2)">================================================================================</text><text class="terminal-3500179698-r1" x="1268.8" y="68.8" textLength="12.2" clip-path="url(#terminal-3500179698-line-2)">
+</text><text class="terminal-3500179698-r1" x="0" y="93.2" textLength="1024.8" clip-path="url(#terminal-3500179698-line-3)">This&#160;application&#160;simulates&#160;F1&#160;race&#160;outcomes&#160;based&#160;on&#160;driver&#160;skills,&#160;car&#160;performance,</text><text class="terminal-3500179698-r1" x="1268.8" y="93.2" textLength="12.2" clip-path="url(#terminal-3500179698-line-3)">
+</text><text class="terminal-3500179698-r1" x="0" y="117.6" textLength="671" clip-path="url(#terminal-3500179698-line-4)">track&#160;characteristics,&#160;and&#160;variable&#160;weather&#160;conditions.</text><text class="terminal-3500179698-r1" x="1268.8" y="117.6" textLength="12.2" clip-path="url(#terminal-3500179698-line-4)">
+</text><text class="terminal-3500179698-r1" x="1268.8" y="142" textLength="12.2" clip-path="url(#terminal-3500179698-line-5)">
+</text><text class="terminal-3500179698-r1" x="0" y="166.4" textLength="341.6" clip-path="url(#terminal-3500179698-line-6)">🏎️&#160;&#160;2026&#160;REGULATION&#160;CHANGES:</text><text class="terminal-3500179698-r1" x="1268.8" y="166.4" textLength="12.2" clip-path="url(#terminal-3500179698-line-6)">
+</text><text class="terminal-3500179698-r1" x="0" y="190.8" textLength="439.2" clip-path="url(#terminal-3500179698-line-7)">&#160;&#160;•&#160;New&#160;power&#160;units&#160;with&#160;350kW&#160;MGU-K</text><text class="terminal-3500179698-r1" x="1268.8" y="190.8" textLength="12.2" clip-path="url(#terminal-3500179698-line-7)">
+</text><text class="terminal-3500179698-r1" x="0" y="215.2" textLength="549" clip-path="url(#terminal-3500179698-line-8)">&#160;&#160;•&#160;Active&#160;aerodynamics&#160;(X-Mode&#160;replaces&#160;DRS)</text><text class="terminal-3500179698-r1" x="1268.8" y="215.2" textLength="12.2" clip-path="url(#terminal-3500179698-line-8)">
+</text><text class="terminal-3500179698-r1" x="0" y="239.6" textLength="317.2" clip-path="url(#terminal-3500179698-line-9)">&#160;&#160;•&#160;100%&#160;sustainable&#160;fuels</text><text class="terminal-3500179698-r1" x="1268.8" y="239.6" textLength="12.2" clip-path="url(#terminal-3500179698-line-9)">
+</text><text class="terminal-3500179698-r1" x="0" y="264" textLength="378.2" clip-path="url(#terminal-3500179698-line-10)">&#160;&#160;•&#160;Audi&#160;enters&#160;as&#160;factory&#160;team</text><text class="terminal-3500179698-r1" x="1268.8" y="264" textLength="12.2" clip-path="url(#terminal-3500179698-line-10)">
+</text><text class="terminal-3500179698-r1" x="1268.8" y="288.4" textLength="12.2" clip-path="url(#terminal-3500179698-line-11)">
+</text><text class="terminal-3500179698-r1" x="0" y="312.8" textLength="817.4" clip-path="url(#terminal-3500179698-line-12)">All&#160;data&#160;is&#160;fictional&#160;and&#160;represents&#160;a&#160;hypothetical&#160;2026&#160;F1&#160;season.</text><text class="terminal-3500179698-r1" x="1268.8" y="312.8" textLength="12.2" clip-path="url(#terminal-3500179698-line-12)">
+</text><text class="terminal-3500179698-r1" x="0" y="337.2" textLength="976" clip-path="url(#terminal-3500179698-line-13)">================================================================================</text><text class="terminal-3500179698-r1" x="1268.8" y="337.2" textLength="12.2" clip-path="url(#terminal-3500179698-line-13)">
+</text><text class="terminal-3500179698-r1" x="1268.8" y="361.6" textLength="12.2" clip-path="url(#terminal-3500179698-line-14)">
+</text><text class="terminal-3500179698-r1" x="0" y="386" textLength="488" clip-path="url(#terminal-3500179698-line-15)">Available&#160;races&#160;in&#160;the&#160;2026&#160;F1&#160;Calendar:</text><text class="terminal-3500179698-r1" x="1268.8" y="386" textLength="12.2" clip-path="url(#terminal-3500179698-line-15)">
+</text><text class="terminal-3500179698-r1" x="0" y="410.4" textLength="732" clip-path="url(#terminal-3500179698-line-16)">------------------------------------------------------------</text><text class="terminal-3500179698-r1" x="1268.8" y="410.4" textLength="12.2" clip-path="url(#terminal-3500179698-line-16)">
+</text><text class="terminal-3500179698-r1" x="0" y="434.8" textLength="1110.2" clip-path="url(#terminal-3500179698-line-17)">|&#160;&#160;&#160;Option&#160;|&#160;Circuit&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|&#160;Country&#160;&#160;&#160;&#160;&#160;&#160;&#160;|&#160;Race&#160;Date&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|</text><text class="terminal-3500179698-r1" x="1268.8" y="434.8" textLength="12.2" clip-path="url(#terminal-3500179698-line-17)">
+</text><text class="terminal-3500179698-r1" x="0" y="459.2" textLength="1110.2" clip-path="url(#terminal-3500179698-line-18)">|---------:|:-------------------------------|:--------------|:----------------------------|</text><text class="terminal-3500179698-r1" x="1268.8" y="459.2" textLength="12.2" clip-path="url(#terminal-3500179698-line-18)">
+</text><text class="terminal-3500179698-r1" x="0" y="483.6" textLength="1110.2" clip-path="url(#terminal-3500179698-line-19)">|&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;1&#160;|&#160;Albert&#160;Park&#160;Circuit&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|&#160;Australia&#160;&#160;&#160;&#160;&#160;|&#160;March&#160;6-8,&#160;2026&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|</text><text class="terminal-3500179698-r1" x="1268.8" y="483.6" textLength="12.2" clip-path="url(#terminal-3500179698-line-19)">
+</text><text class="terminal-3500179698-r1" x="0" y="508" textLength="1110.2" clip-path="url(#terminal-3500179698-line-20)">|&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;2&#160;|&#160;Shanghai&#160;International&#160;Circuit&#160;|&#160;China&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|&#160;March&#160;13-15,&#160;2026&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|</text><text class="terminal-3500179698-r1" x="1268.8" y="508" textLength="12.2" clip-path="url(#terminal-3500179698-line-20)">
+</text><text class="terminal-3500179698-r1" x="0" y="532.4" textLength="1110.2" clip-path="url(#terminal-3500179698-line-21)">|&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;3&#160;|&#160;Suzuka&#160;Circuit&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|&#160;Japan&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|&#160;March&#160;27-29,&#160;2026&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|</text><text class="terminal-3500179698-r1" x="1268.8" y="532.4" textLength="12.2" clip-path="url(#terminal-3500179698-line-21)">
+</text><text class="terminal-3500179698-r1" x="0" y="556.8" textLength="1110.2" clip-path="url(#terminal-3500179698-line-22)">|&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;4&#160;|&#160;Bahrain&#160;International&#160;Circuit&#160;&#160;|&#160;Bahrain&#160;&#160;&#160;&#160;&#160;&#160;&#160;|&#160;April&#160;10-12,&#160;2026&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|</text><text class="terminal-3500179698-r1" x="1268.8" y="556.8" textLength="12.2" clip-path="url(#terminal-3500179698-line-22)">
+</text><text class="terminal-3500179698-r1" x="0" y="581.2" textLength="1110.2" clip-path="url(#terminal-3500179698-line-23)">|&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;5&#160;|&#160;Jeddah&#160;Corniche&#160;Circuit&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|&#160;Saudi&#160;Arabia&#160;&#160;|&#160;April&#160;17-19,&#160;2026&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|</text><text class="terminal-3500179698-r1" x="1268.8" y="581.2" textLength="12.2" clip-path="url(#terminal-3500179698-line-23)">
+</text><text class="terminal-3500179698-r1" x="0" y="605.6" textLength="1110.2" clip-path="url(#terminal-3500179698-line-24)">|&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;6&#160;|&#160;Miami&#160;International&#160;Autodrome&#160;&#160;|&#160;USA&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|&#160;May&#160;1-3,&#160;2026&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|</text><text class="terminal-3500179698-r1" x="1268.8" y="605.6" textLength="12.2" clip-path="url(#terminal-3500179698-line-24)">
+</text><text class="terminal-3500179698-r1" x="0" y="630" textLength="1110.2" clip-path="url(#terminal-3500179698-line-25)">|&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;7&#160;|&#160;Circuit&#160;Gilles&#160;Villeneuve&#160;&#160;&#160;&#160;&#160;&#160;|&#160;Canada&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|&#160;May&#160;22-24,&#160;2026&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|</text><text class="terminal-3500179698-r1" x="1268.8" y="630" textLength="12.2" clip-path="url(#terminal-3500179698-line-25)">
+</text><text class="terminal-3500179698-r1" x="0" y="654.4" textLength="1110.2" clip-path="url(#terminal-3500179698-line-26)">|&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;8&#160;|&#160;Circuit&#160;de&#160;Monaco&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|&#160;Monaco&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|&#160;June&#160;5-7,&#160;2026&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|</text><text class="terminal-3500179698-r1" x="1268.8" y="654.4" textLength="12.2" clip-path="url(#terminal-3500179698-line-26)">
+</text><text class="terminal-3500179698-r1" x="0" y="678.8" textLength="1110.2" clip-path="url(#terminal-3500179698-line-27)">|&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;9&#160;|&#160;Circuit&#160;de&#160;Barcelona-Catalunya&#160;|&#160;Spain&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|&#160;June&#160;12-14,&#160;2026&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|</text><text class="terminal-3500179698-r1" x="1268.8" y="678.8" textLength="12.2" clip-path="url(#terminal-3500179698-line-27)">
+</text><text class="terminal-3500179698-r1" x="0" y="703.2" textLength="1110.2" clip-path="url(#terminal-3500179698-line-28)">|&#160;&#160;&#160;&#160;&#160;&#160;&#160;10&#160;|&#160;Red&#160;Bull&#160;Ring&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|&#160;Austria&#160;&#160;&#160;&#160;&#160;&#160;&#160;|&#160;June&#160;26-28,&#160;2026&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|</text><text class="terminal-3500179698-r1" x="1268.8" y="703.2" textLength="12.2" clip-path="url(#terminal-3500179698-line-28)">
+</text><text class="terminal-3500179698-r1" x="0" y="727.6" textLength="1110.2" clip-path="url(#terminal-3500179698-line-29)">|&#160;&#160;&#160;&#160;&#160;&#160;&#160;11&#160;|&#160;Silverstone&#160;Circuit&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|&#160;Great&#160;Britain&#160;|&#160;July&#160;3-5,&#160;2026&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|</text><text class="terminal-3500179698-r1" x="1268.8" y="727.6" textLength="12.2" clip-path="url(#terminal-3500179698-line-29)">
+</text><text class="terminal-3500179698-r1" x="0" y="752" textLength="1110.2" clip-path="url(#terminal-3500179698-line-30)">|&#160;&#160;&#160;&#160;&#160;&#160;&#160;12&#160;|&#160;Circuit&#160;de&#160;Spa-Francorchamps&#160;&#160;&#160;|&#160;Belgium&#160;&#160;&#160;&#160;&#160;&#160;&#160;|&#160;July&#160;17-19,&#160;2026&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|</text><text class="terminal-3500179698-r1" x="1268.8" y="752" textLength="12.2" clip-path="url(#terminal-3500179698-line-30)">
+</text><text class="terminal-3500179698-r1" x="0" y="776.4" textLength="1110.2" clip-path="url(#terminal-3500179698-line-31)">|&#160;&#160;&#160;&#160;&#160;&#160;&#160;13&#160;|&#160;Hungaroring&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|&#160;Hungary&#160;&#160;&#160;&#160;&#160;&#160;&#160;|&#160;July&#160;24-26,&#160;2026&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|</text><text class="terminal-3500179698-r1" x="1268.8" y="776.4" textLength="12.2" clip-path="url(#terminal-3500179698-line-31)">
+</text><text class="terminal-3500179698-r1" x="0" y="800.8" textLength="1110.2" clip-path="url(#terminal-3500179698-line-32)">|&#160;&#160;&#160;&#160;&#160;&#160;&#160;14&#160;|&#160;Circuit&#160;Zandvoort&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|&#160;Netherlands&#160;&#160;&#160;|&#160;August&#160;21-23,&#160;2026&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|</text><text class="terminal-3500179698-r1" x="1268.8" y="800.8" textLength="12.2" clip-path="url(#terminal-3500179698-line-32)">
+</text><text class="terminal-3500179698-r1" x="0" y="825.2" textLength="1110.2" clip-path="url(#terminal-3500179698-line-33)">|&#160;&#160;&#160;&#160;&#160;&#160;&#160;15&#160;|&#160;Autodromo&#160;Nazionale&#160;Monza&#160;&#160;&#160;&#160;&#160;&#160;|&#160;Italy&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|&#160;September&#160;4-6,&#160;2026&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|</text><text class="terminal-3500179698-r1" x="1268.8" y="825.2" textLength="12.2" clip-path="url(#terminal-3500179698-line-33)">
+</text><text class="terminal-3500179698-r1" x="0" y="849.6" textLength="1110.2" clip-path="url(#terminal-3500179698-line-34)">|&#160;&#160;&#160;&#160;&#160;&#160;&#160;16&#160;|&#160;Madrid&#160;Street&#160;Circuit&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|&#160;Spain&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|&#160;September&#160;11-13,&#160;2026&#160;&#160;&#160;&#160;&#160;&#160;&#160;|</text><text class="terminal-3500179698-r1" x="1268.8" y="849.6" textLength="12.2" clip-path="url(#terminal-3500179698-line-34)">
+</text><text class="terminal-3500179698-r1" x="0" y="874" textLength="1110.2" clip-path="url(#terminal-3500179698-line-35)">|&#160;&#160;&#160;&#160;&#160;&#160;&#160;17&#160;|&#160;Baku&#160;City&#160;Circuit&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|&#160;Azerbaijan&#160;&#160;&#160;&#160;|&#160;September&#160;24-26,&#160;2026&#160;&#160;&#160;&#160;&#160;&#160;&#160;|</text><text class="terminal-3500179698-r1" x="1268.8" y="874" textLength="12.2" clip-path="url(#terminal-3500179698-line-35)">
+</text><text class="terminal-3500179698-r1" x="0" y="898.4" textLength="1110.2" clip-path="url(#terminal-3500179698-line-36)">|&#160;&#160;&#160;&#160;&#160;&#160;&#160;18&#160;|&#160;Marina&#160;Bay&#160;Street&#160;Circuit&#160;&#160;&#160;&#160;&#160;&#160;|&#160;Singapore&#160;&#160;&#160;&#160;&#160;|&#160;October&#160;9-11,&#160;2026&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|</text><text class="terminal-3500179698-r1" x="1268.8" y="898.4" textLength="12.2" clip-path="url(#terminal-3500179698-line-36)">
+</text><text class="terminal-3500179698-r1" x="0" y="922.8" textLength="1110.2" clip-path="url(#terminal-3500179698-line-37)">|&#160;&#160;&#160;&#160;&#160;&#160;&#160;19&#160;|&#160;Circuit&#160;of&#160;the&#160;Americas&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|&#160;USA&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|&#160;October&#160;23-25,&#160;2026&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|</text><text class="terminal-3500179698-r1" x="1268.8" y="922.8" textLength="12.2" clip-path="url(#terminal-3500179698-line-37)">
+</text><text class="terminal-3500179698-r1" x="0" y="947.2" textLength="1110.2" clip-path="url(#terminal-3500179698-line-38)">|&#160;&#160;&#160;&#160;&#160;&#160;&#160;20&#160;|&#160;Autódromo&#160;Hermanos&#160;Rodríguez&#160;&#160;&#160;|&#160;Mexico&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|&#160;October&#160;30-November&#160;1,&#160;2026&#160;|</text><text class="terminal-3500179698-r1" x="1268.8" y="947.2" textLength="12.2" clip-path="url(#terminal-3500179698-line-38)">
+</text><text class="terminal-3500179698-r1" x="0" y="971.6" textLength="1110.2" clip-path="url(#terminal-3500179698-line-39)">|&#160;&#160;&#160;&#160;&#160;&#160;&#160;21&#160;|&#160;Autódromo&#160;José&#160;Carlos&#160;Pace&#160;&#160;&#160;&#160;&#160;|&#160;Brazil&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|&#160;November&#160;6-8,&#160;2026&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|</text><text class="terminal-3500179698-r1" x="1268.8" y="971.6" textLength="12.2" clip-path="url(#terminal-3500179698-line-39)">
+</text><text class="terminal-3500179698-r1" x="0" y="996" textLength="1110.2" clip-path="url(#terminal-3500179698-line-40)">|&#160;&#160;&#160;&#160;&#160;&#160;&#160;22&#160;|&#160;Las&#160;Vegas&#160;Strip&#160;Circuit&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|&#160;USA&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|&#160;November&#160;19-21,&#160;2026&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|</text><text class="terminal-3500179698-r1" x="1268.8" y="996" textLength="12.2" clip-path="url(#terminal-3500179698-line-40)">
+</text><text class="terminal-3500179698-r1" x="0" y="1020.4" textLength="1110.2" clip-path="url(#terminal-3500179698-line-41)">|&#160;&#160;&#160;&#160;&#160;&#160;&#160;23&#160;|&#160;Losail&#160;International&#160;Circuit&#160;&#160;&#160;|&#160;Qatar&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|&#160;November&#160;27-29,&#160;2026&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|</text><text class="terminal-3500179698-r1" x="1268.8" y="1020.4" textLength="12.2" clip-path="url(#terminal-3500179698-line-41)">
+</text><text class="terminal-3500179698-r1" x="0" y="1044.8" textLength="1110.2" clip-path="url(#terminal-3500179698-line-42)">|&#160;&#160;&#160;&#160;&#160;&#160;&#160;24&#160;|&#160;Yas&#160;Marina&#160;Circuit&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|&#160;UAE&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|&#160;December&#160;4-6,&#160;2026&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;|</text><text class="terminal-3500179698-r1" x="1268.8" y="1044.8" textLength="12.2" clip-path="url(#terminal-3500179698-line-42)">
+</text>
+    </g>
+    </g>
+</svg>
