@@ -51,7 +51,9 @@ This project is a **comprehensive Formula 1 race simulation system** that models
 
 ### Key Highlights
 
-- **Triple Hybrid Prediction**: Real F1 data (50%) + ML Models (25%) + Monte Carlo simulation (25%)
+- **Hybrid Prediction**: Lap-by-lap Monte Carlo simulation, adjusted by real Fast-F1 data (qualifying and post-race) and by an ML model trained on 191 real races (2018–2026) that shifts each driver's race pace
+- **Validated ML**: Walk-forward backtest on the 2025–2026 seasons, compared against a grid-position baseline
+- **Win & Podium Probabilities**: Per-race calibrated probabilities shown in the analysis menu
 - **2026 Regulation Compliance**: Full support for new power units (350kW MGU-K), active aerodynamics (X-Mode), and sustainable fuels
 - **11 Teams / 22 Drivers**: Complete 2026 grid including the new Cadillac F1 entry
 - **24 Race Calendar**: Official 2026 FIA Formula One World Championship schedule
@@ -124,7 +126,7 @@ This project is a **comprehensive Formula 1 race simulation system** that models
 | **Simulation Engine** | Monte Carlo algorithms, physics modeling, race logic |
 | **Presentation Layer** | Visualization generation, statistical analysis, output formatting |
 | **Fast-F1 Integration** | Real telemetry, lap times, driver standings, historical data |
-| **ML Prediction Layer** | Random Forest, Gradient Boosting, Neural Network ensemble |
+| **ML Prediction Layer** | Model trained on real results (Random Forest, with Gradient Boosting / XGBoost compared), win & podium classifiers |
 
 ---
 
@@ -415,35 +417,21 @@ class RealDataProvider:
 
 #### Hybrid Prediction Model
 
+`EnhancedRaceSimulator` combines three sources:
+
+1. **Monte Carlo simulation** – every lap time comes from `_calculate_race_pace` (driver/car ratings, tyres, fuel, weather, randomness).
+2. **Real Fast-F1 data** – adjusts the qualifying order and applies post-race adjustments (overtaking, tyre management, consistency, reliability).
+3. **ML model** – before the race, each driver's ML expected finishing position becomes a per-lap pace offset, centred on the field:
+
 ```python
-class EnhancedRaceSimulator(RaceSimulator):
-    """
-    Hybrid model blending real data with simulation.
-    
-    Formula:
-    T_final = (T_real × W_real) + (T_sim × W_sim)
-    
-    Where:
-    - W_real = 0.65 (real data weight)
-    - W_sim = 0.35 (simulation weight)
-    """
-    REAL_DATA_WEIGHT = 0.65
-    SIMULATION_WEIGHT = 0.35
-    
-    def calculate_lap_time(self, driver, team, lap, tire_deg):
-        T_sim = super().calculate_lap_time(driver, team, lap, tire_deg)
-        
-        if self.real_data_available(driver):
-            T_real = self.get_real_lap_time(driver)
-            T_final = (T_real * self.REAL_DATA_WEIGHT + 
-                      T_sim * self.SIMULATION_WEIGHT)
-        else:
-            T_final = T_sim
-        
-        # Apply consistency-based variance
-        variance = self.calculate_variance(driver.consistency)
-        return T_final + random.gauss(0, variance)
+# offset (s/lap) = ML_WEIGHT × ML_SECONDS_PER_POSITION × (expected_position − field_mean)
+ML_WEIGHT = 0.25                # share of one position's gap the ML can shift
+ML_SECONDS_PER_POSITION = 0.6   # simulator's typical per-lap gap between consecutive finishers
 ```
+
+Over 40 seeded races this moves drivers the ML disagrees with by up to ~1.6 positions, while drivers the simulation and ML agree on stay put.
+
+> `calculate_lap_time` also contains a real-lap-time blend (`REAL_DATA_WEIGHT` / `SIMULATION_WEIGHT`), but the race loop does not call it, so it currently has no effect on results.
 
 ---
 
@@ -588,16 +576,21 @@ pip install -r requirements.txt
 ### Dependencies
 
 ```
-numpy>=1.21.0
+numpy>=2.0
 pandas>=1.3.0
-matplotlib>=3.4.0
+matplotlib>=3.9
 seaborn>=0.11.0
+scikit-learn>=1.6
+xgboost>=3.0
+joblib>=1.3
 fastf1>=3.0.0
 tabulate>=0.8.9
 colorama>=0.4.4
-requests>=2.26.0
+requests>=2.25.0
 scipy>=1.7.0
 ```
+
+The trained model in `models/trained/` was saved with scikit-learn 1.6.1 and XGBoost 3.4.1; use the same versions to load it without warnings.
 
 ---
 
@@ -615,7 +608,7 @@ python main.py
 2. Choose weather condition (Realistic/Dry/Wet/Mixed)
 3. View qualifying results
 4. Watch race simulation
-5. Analyze results with visualizations
+5. Analyze results: qualifying vs race, statistics, real data insights, **ML win & podium probabilities**, visualizations
 
 ### Example Output
 
@@ -671,9 +664,16 @@ f1-race-prediction/
 ├── models/                      # Simulation engine
 │   ├── __init__.py
 │   ├── race_model.py            # Core Monte Carlo engine
-│   ├── enhanced_race_model.py   # Real data enhancement
+│   ├── enhanced_race_model.py   # Real data + ML enhancement
+│   ├── ml_predictor.py          # ML predictions (trained model or synthetic fallback)
+│   ├── trained_model.py         # Loads the trained model, rebuilds its features
+│   ├── trained/                 # f1_model.joblib + f1_training_data.csv
 │   ├── strategy.py              # Tire & pit modeling
 │   └── weather.py               # Weather generation
+│
+├── notebooks/                   # Model training (Google Colab)
+│   ├── make_notebook.py         # Source of truth; generates the notebook
+│   └── train_f1_model_colab.ipynb
 │
 ├── utils/                       # Utilities
 │   ├── __init__.py
@@ -715,154 +715,68 @@ f1-race-prediction/
 
 ## 🤖 Machine Learning Models
 
-### Ensemble Architecture
+### Overview
 
-The ML prediction system uses a **weighted ensemble** of three models:
+The ML layer is trained on **real race results**, not on the simulator's own ratings:
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    ML PREDICTION ENSEMBLE                       │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│   ┌─────────────┐    ┌─────────────┐    ┌─────────────┐       │
-│   │  Random     │    │  Gradient   │    │  Neural     │       │
-│   │  Forest     │    │  Boosting   │    │  Network    │       │
-│   │  (40%)      │    │  (35%)      │    │  (25%)      │       │
-│   └──────┬──────┘    └──────┬──────┘    └──────┬──────┘       │
-│          │                  │                  │               │
-│          └──────────────────┼──────────────────┘               │
-│                             ▼                                  │
-│                  ┌─────────────────────┐                       │
-│                  │  Weighted Ensemble  │                       │
-│                  │  Final Prediction   │                       │
-│                  └─────────────────────┘                       │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
+| | |
+|---|---|
+| **Data** | 191 races, 2018–2026 (3,854 driver results) from the [Jolpica](https://api.jolpi.ca) (Ergast) API |
+| **Weather** | Wet/dry per race from [Open-Meteo](https://open-meteo.com) historical weather (rain in the 3 h before + during the race ≥ 0.5 mm) |
+| **Position model** | Random Forest predicting the **position change from the grid slot** (finish − grid) |
+| **Probability models** | Random Forest classifiers for **win** and **podium**, normalized per race (sum 1 and 3) |
+| **Training** | Google Colab notebook: `notebooks/train_f1_model_colab.ipynb` |
 
-### Model Specifications
+If `models/trained/` is missing, `ml_predictor.py` falls back to the original synthetic-data ensemble.
 
-| Model | Type | Hyperparameters | Purpose |
-|-------|------|-----------------|--------|
-| **Random Forest** | `RandomForestRegressor` | 100 trees, max_depth=10 | Non-linear pattern capture |
-| **Gradient Boosting** | `GradientBoostingRegressor` | 100 estimators, lr=0.1 | Complex feature interactions |
-| **Neural Network** | `MLPRegressor` | Layers: 64→32→16 | Deep pattern recognition |
+### Features (23)
 
-### Feature Engineering
+All features use **only information available before the race** (computed with `shift(1)`), so no result leaks into its own prediction.
 
-25 features extracted from driver, team, and track data:
+| Group | Features |
+|-------|----------|
+| Grid & qualifying | `grid`, `quali_gap_pct`, `grid_penalty`, `teammate_quali_delta`, `grid_vs_teammate` |
+| Driver form | `driver_form_5`, `driver_season_form`, `driver_points_5`, `driver_dnf_10`, `driver_gain_5`, `driver_experience`, `driver_track_avg` |
+| Team form | `team_form_5`, `team_season_form`, `team_points_5`, `team_dnf_10`, `grid_vs_team_form` |
+| Championship | `season_points_before`, `season_rank_before` |
+| Race context | `is_wet`, `round`, `circuit_pos_change`, `reg_era_2026` |
 
-```python
-FEATURES = [
-    # Driver attributes (9 features)
-    'skill_dry', 'skill_wet', 'consistency', 'experience',
-    'qualifying_pace', 'tire_management', 'racecraft', 'overtaking', 'aggression',
-    
-    # Team attributes (7 features)
-    'performance', 'reliability', 'aero', 'power',
-    'active_aero', 'energy_recovery', 'pit_efficiency',
-    
-    # Track attributes (7 features)
-    'length', 'corners', 'downforce', 'tyre_wear',
-    'overtaking_difficulty', 'active_aero_advantage', 'energy_demand',
-    
-    # Race context (2 features)
-    'grid_position', 'is_wet'
-]
-```
+Free-practice long-run pace features are implemented as well, but the F1 live-timing archive now requires an F1 TV Access login. Without credentials (Colab Secrets `F1_USERNAME` / `F1_PASSWORD`) that step is skipped and the features are left out.
 
-### Training Pipeline
+### Retraining
 
-```python
-def train_models(X, y):
-    """
-    Training pipeline with synthetic F1 data.
-    
-    1. Generate 5,000 synthetic race scenarios
-    2. Apply domain knowledge for position labels
-    3. Normalize features with StandardScaler
-    4. Train each model independently
-    5. Cross-validate for hyperparameter tuning
-    """
-    X_scaled = scaler.fit_transform(X)
-    
-    rf_model.fit(X_scaled, y)   # Random Forest
-    gb_model.fit(X_scaled, y)   # Gradient Boosting
-    nn_model.fit(X_scaled, y)   # Neural Network
-```
-
-### Confidence Scoring
-
-```python
-def calculate_confidence(predictions):
-    """
-    Confidence = 0.6 × ModelAgreement + 0.4 × PositionCertainty
-    
-    Where:
-    - ModelAgreement: 1 - normalized std deviation between models
-    - PositionCertainty: 1 - |predicted - rounded_position| / 10
-    """
-```
+1. Open `notebooks/train_f1_model_colab.ipynb` in Google Colab (edit `notebooks/make_notebook.py` and run it to regenerate the notebook)
+2. `Runtime → Change runtime type → T4 GPU` (optional) and `Runtime → Run all` (~25 min)
+3. Copy the downloaded `f1_model.joblib` and `f1_training_data.csv` into `models/trained/`
 
 ---
 
 ## 📊 Prediction Track Record
 
-### 2025 Season Predictions vs Reality
+### Method
 
-During the 2025 development phase, the simulator was tested against actual race results:
+**Walk-forward backtest**: every race in 2025 and 2026 is predicted by a model trained only on the races before it (retrained every 2 races). Four configurations are compared; the configuration is **chosen on 2025** and **reported on 2026** (18 races). The baseline assumes every driver finishes where they start.
 
-| Race | Predicted Winner | Actual Winner | Podium Accuracy | Notes |
-|------|-----------------|---------------|-----------------|-------|
-| 🇦🇺 **Australian GP** | Verstappen | Norris | 2/3 ✅ | Predicted P2 for Norris |
-| 🇨🇳 **Chinese GP** | Norris | Norris | 3/3 ✅ | Perfect podium prediction |
-| 🇯🇵 **Japanese GP** | Verstappen | Verstappen | 2/3 ✅ | Missed Piastri P3 |
-| 🇧🇭 **Bahrain GP** | Leclerc | Norris | 1/3 ⚠️ | Ferrari overestimated |
-| 🇸🇦 **Saudi Arabian GP** | Verstappen | Piastri | 1/3 ⚠️ | McLaren dominance unexpected |
-| 🇺🇸 **Miami GP** | Norris | Norris | 3/3 ✅ | Perfect prediction |
-| 🇮🇹 **Imola GP** | Norris | Norris | 2/3 ✅ | Hamilton P3 predicted correctly |
-| 🇲🇨 **Monaco GP** | Leclerc | Leclerc | 3/3 ✅ | Home race advantage modeled |
-| 🇪🇸 **Spanish GP** | Norris | Verstappen | 2/3 ✅ | Close prediction, 0.3s gap |
-| 🇨🇦 **Canadian GP** | Verstappen | Russell | 1/3 ⚠️ | Mercedes resurgence missed |
-| 🇦🇹 **Austrian GP** | Norris | Russell | 0/3 ❌ | Collision not predictable |
-| 🇬🇧 **British GP** | Norris | Hamilton | 2/3 ✅ | Close Hamilton/Norris call |
-| 🇧🇪 **Belgian GP** | Verstappen | Hamilton | 1/3 ⚠️ | Russell DQ not modeled |
-| 🇭🇺 **Hungarian GP** | Verstappen | Piastri | 2/3 ✅ | McLaren 1-2 predicted |
-| 🇳🇱 **Dutch GP** | Verstappen | Norris | 2/3 ✅ | Home disadvantage this year |
-| 🇮🇹 **Italian GP** | Norris | Leclerc | 2/3 ✅ | Ferrari home boost accurate |
+### Position model (2026, 18 races)
 
-### Accuracy Metrics (2025 Sample)
+| Model | MAE (positions) | Spearman | Winner correct | Podium overlap |
+|-------|----------------:|---------:|---------------:|---------------:|
+| Baseline: finish = grid | **3.42** | 0.659 | **72%** | **63%** |
+| Previous ensemble (RF + GB + XGBoost) | 3.55 | 0.679 | 61% | 57% |
+| **Current model** (Random Forest, delta target) | 3.49 | **0.682** | **72%** | **63%** |
 
-| Metric | Value | Description |
-|--------|-------|-------------|
-| **Winner Prediction** | 56.3% | Correctly predicted P1 |
-| **Podium Accuracy** | 68.8% | Average correct podium positions |
-| **Top 5 Accuracy** | 74.2% | Correctly predicted top 5 finishers |
-| **Within ±1 Position** | 45.6% | All drivers within 1 position |
-| **Within ±3 Positions** | 82.4% | All drivers within 3 positions |
-| **Mean Absolute Error** | 2.3 pos | Average position error |
+### Win & podium probabilities (2026)
 
-### Key Insights
+| Model | Win log loss | Podium log loss | Favourite won | Favourite on podium |
+|-------|-------------:|----------------:|--------------:|--------------------:|
+| Baseline: P(result \| grid slot) | 0.094 | 0.213 | 72% | 83% |
+| **Classifiers** | **0.075** | **0.191** | 67% | 83% |
 
-🟢 **Strengths**:
-- Excellent at Monaco/street circuits (track characteristics dominant)
-- McLaren 2025 dominance correctly weighted mid-season
-- Weather impact modeling accurate for Silverstone/Spa
+### Takeaways
 
-🔴 **Weaknesses**:
-- First-lap incidents unpredictable (Austrian GP)
-- DQ/penalties not modeled (Belgian GP)
-- Mid-season development jumps lag behind (Mercedes resurgence)
-
-### Model Improvement Timeline
-
-```
-v1.0 (Jan 2025)  → Winner Accuracy: 31%   → Base simulation only
-v2.0 (Apr 2025)  → Winner Accuracy: 44%   → Real F1 data integration
-v3.0 (Aug 2025)  → Winner Accuracy: 56%   → ML ensemble added
-v3.1 (Dec 2025)  → Winner Accuracy: 62%   → Feature engineering improved
-v4.0 (Feb 2026)  → In development        → 2026 regulation modeling
-```
+- Qualifying position is by far the strongest predictor; the position model ranks drivers slightly better than the grid but does not beat it on average error.
+- The probability models are clearly better calibrated than the grid baseline (lower log loss), which is what the simulator's ML layer and the probability menu use.
+- With 18 test races, differences of one race (~5%) in winner/podium hit rates are within noise.
 
 ---
 
@@ -870,9 +784,10 @@ v4.0 (Feb 2026)  → In development        → 2026 regulation modeling
 
 ### Planned Features
 
-- [x] **Machine Learning Integration**: Ensemble of RF, GB, and NN models ✅
+- [x] **Machine Learning Integration**: Model trained on real 2018–2026 results ✅
+- [x] **Historical Comparison**: Walk-forward backtest against actual results ✅
+- [x] **Win & Podium Probabilities**: Calibrated per-race classifiers ✅
 - [ ] **Web Dashboard**: Flask/React frontend for visualization
-- [ ] **Historical Comparison**: Compare predictions vs actual results
 - [ ] **Championship Simulation**: Full season Monte Carlo
 - [ ] **Strategy Optimizer**: ML-based optimal pit strategy
 - [ ] **Live Race Integration**: Real-time prediction updates
