@@ -365,9 +365,10 @@ df['grid_penalty'] = (df['grid'] - df['quali_pos']).clip(lower=0)
 df['has_practice'] = df['practice_pace_gap'].notna().astype(int)
 df['practice_form_5'] = past_rolling(df, 'driver', 'practice_pace_gap', 5)
 # Eksik antrenman verisi: önce o yarışın medyanı, sonra tüm verinin medyanı
+# Son .fillna(0): veri hiç yoksa medyanlar da NaN olur, model NaN kabul etmez
 for c in ['practice_pace_gap', 'practice_best_gap']:
-    df[c] = df[c].fillna(df.groupby('race_id')[c].transform('median')).fillna(df[c].median())
-df['practice_form_5'] = df['practice_form_5'].fillna(df['practice_pace_gap'].median())
+    df[c] = df[c].fillna(df.groupby('race_id')[c].transform('median')).fillna(df[c].median()).fillna(0)
+df['practice_form_5'] = df['practice_form_5'].fillna(df['practice_pace_gap'].median()).fillna(0)
 
 BASE_FEATURES = [
     'grid', 'quali_gap_pct', 'is_wet', 'round',
@@ -380,8 +381,13 @@ FEATURES = BASE_FEATURES + [
     'driver_season_form', 'team_season_form', 'teammate_quali_delta',
     'grid_vs_teammate', 'grid_vs_team_form', 'reg_era_2026',
     'grid_penalty',
-    'practice_pace_gap', 'practice_best_gap', 'practice_form_5', 'has_practice',
 ]
+# Antrenman verisi hiç yoksa bu özellikler sabit/boş kalır → modele hiç verilmez
+PRACTICE_FEATURES = ['practice_pace_gap', 'practice_best_gap', 'practice_form_5', 'has_practice']
+if df['has_practice'].any():
+    FEATURES += PRACTICE_FEATURES
+else:
+    print('ℹ️ Antrenman verisi yok — antrenman tempo özellikleri modele dahil edilmiyor.')
 print(df[FEATURES].describe().T[['mean', 'min', 'max']])
 """)
 

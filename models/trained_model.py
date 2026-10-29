@@ -54,6 +54,7 @@ class TrainedF1Model:
     """Ensemble (RF + GB + XGBoost) trained on 2018+ real race results."""
 
     def __init__(self, bundle: Dict, history):
+        import pandas as pd
         import xgboost as xgb
 
         self.features: List[str] = bundle['features']
@@ -83,10 +84,11 @@ class TrainedF1Model:
             .groupby('circuit')['abs_gain'].mean()
 
         # Practice pace is unavailable in the simulator -> neutral training-history medians
+        # Bundles trained without practice data have an all-NaN column -> leave the key out
         self._practice_median = {
             col: float(self.history[col].median())
             for col in ('practice_pace_gap', 'practice_best_gap')
-            if col in self.history.columns
+            if col in self.history.columns and not pd.isna(self.history[col].median())
         }
 
     @property
