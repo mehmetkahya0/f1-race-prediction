@@ -6,8 +6,10 @@ This module implements multiple ML algorithms to enhance race predictions:
 - Gradient Boosting for lap time estimation
 - Neural Network (MLP) for race outcome classification
 
-The ML models are trained on historical F1 data and combined with
-Monte Carlo simulation for improved accuracy.
+When models/trained/ contains a model trained on real F1 results
+(notebooks/train_f1_model_colab.ipynb), that model is used. Otherwise the
+models are trained on synthetic data built from F1 domain knowledge.
+Predictions are combined with Monte Carlo simulation for improved accuracy.
 """
 
 import numpy as np
@@ -28,6 +30,8 @@ try:
     SKLEARN_AVAILABLE = True
 except ImportError:
     SKLEARN_AVAILABLE = False
+
+from models.trained_model import load_trained_model
 
 logger = logging.getLogger(__name__)
 
@@ -126,7 +130,9 @@ class F1MLPredictor:
     def __init__(self):
         self.feature_extractor = FeatureExtractor()
         self._models_trained = False
-        
+        # Model trained on real race results; None → synthetic fallback below
+        self.trained_model = load_trained_model() if SKLEARN_AVAILABLE else None
+
         if SKLEARN_AVAILABLE:
             # Initialize models with optimized hyperparameters
             self.rf_model = RandomForestRegressor(
@@ -306,12 +312,28 @@ class F1MLPredictor:
         """
         if not SKLEARN_AVAILABLE:
             return self._fallback_predictions(drivers, grid_positions)
-        
+
+        is_wet = weather.is_wet if hasattr(weather, 'is_wet') else False
+
+        if self.trained_model is not None:
+            try:
+                X = self.trained_model.build_features(
+                    grid_positions, teams, track, is_wet, self._round_for(track)
+                )
+                preds = self.trained_model.predict(X)
+                return self._build_predictions(
+                    preds['ensemble'],
+                    [preds[name] for name in self.trained_model.weights],
+                    grid_positions,
+                    self.trained_model.feature_importances
+                )
+            except Exception as e:
+                logger.warning(f"Trained model prediction failed, using synthetic models: {e}")
+
         if not self._models_trained:
             self.train()
-        
+
         # Extract features
-        is_wet = weather.is_wet if hasattr(weather, 'is_wet') else False
         X = self.feature_extractor.extract_all_features(
             drivers, teams, track, grid_positions, is_wet
         )
@@ -334,16 +356,31 @@ class F1MLPredictor:
             nn_preds * self.NN_WEIGHT
         )
         
-        # Calculate model agreement (standard deviation between models)
-        model_std = np.std([rf_preds, gb_preds, nn_preds], axis=0)
-        model_agreement = 1 - np.clip(model_std / 5, 0, 1)  # Normalize
-        
         # Get feature importances from Random Forest
         feature_importance = dict(zip(
             FeatureExtractor.FEATURE_NAMES,
             self.rf_model.feature_importances_
         ))
-        
+
+        return self._build_predictions(
+            ensemble_preds, [rf_preds, gb_preds, nn_preds],
+            grid_positions, feature_importance
+        )
+
+    @staticmethod
+    def _round_for(track) -> int:
+        """Calendar round of the track (1-based), used as a season-progress feature."""
+        from data.tracks import get_calendar
+        names = [t.name for t in get_calendar()]
+        return names.index(track.name) + 1 if track.name in names else len(names) // 2
+
+    def _build_predictions(self, ensemble_preds, model_preds: List[np.ndarray],
+                           grid_positions: List, feature_importance: Dict[str, float]) -> List[MLPrediction]:
+        """Turn raw position estimates into MLPrediction objects with confidence."""
+        # Calculate model agreement (standard deviation between models)
+        model_std = np.std(model_preds, axis=0)
+        model_agreement = 1 - np.clip(model_std / 5, 0, 1)  # Normalize
+
         # Create predictions
         predictions = []
         for i, driver in enumerate(grid_positions):
