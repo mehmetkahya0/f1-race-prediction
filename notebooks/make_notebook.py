@@ -159,11 +159,29 @@ md(r"""
 Yarış temposunun asıl göstergesi **uzun run** hızıdır: pilotun pit yapmadan arka arkaya attığı turlar. Buradan iki özellik çıkıyor: uzun run ortalamasının seansın en hızlısına göre farkı (`practice_pace_gap`) ve tek turun farkı (`practice_best_gap`).
 
 Sadece 2022+ alınıyor: mevcut kural dönemi ve FastF1'in saatlik istek limiti (seans başına **tek** istek).
+
+Bu adım yalnızca Colab Secrets üzerinden F1 TV Access girişi (`F1_USERNAME`, `F1_PASSWORD`) verildiğinde çalışır; aksi halde atlanır.
 """)
 
 code(r"""
 # 2022 = mevcut kural döneminin başlangıcı; ayrıca FastF1 saatlik istek limitini aşmamak için
 PRACTICE_YEARS = range(2022, 2027)
+
+# Ekim 2026'dan beri canlı timing arşivi F1 TV Access girişi istiyor; FastF1 bunu
+# F1_USERNAME / F1_PASSWORD env değişkenlerinden okur. Giriş yoksa her 2023+ seansı
+# SessionNotAvailableError verir ve FastF1'in saatlik istek bütçesi boşa yanar.
+try:
+    from google.colab import userdata
+    for key in ('F1_USERNAME', 'F1_PASSWORD'):
+        if not os.environ.get(key):
+            os.environ[key] = userdata.get(key)
+except Exception:
+    pass   # secret yok / Colab dışında
+
+HAS_F1_LOGIN = bool(os.environ.get('F1_USERNAME') and os.environ.get('F1_PASSWORD'))
+if not HAS_F1_LOGIN:
+    PRACTICE_YEARS = range(0)
+    print('ℹ️ Antrenman tempo verisi atlanıyor: F1 TV Access girişi gerekli (Colab Secrets: F1_USERNAME / F1_PASSWORD). Model bu veri olmadan da çalışıyor.')
 
 
 def practice_session(year, rnd):
@@ -224,6 +242,8 @@ for year, rnd in raw[['year', 'round']].drop_duplicates().itertuples(index=False
 practice = (pd.concat(practice_frames, ignore_index=True) if practice_frames
             else pd.DataFrame(columns=['year', 'round', 'car_number', 'practice_pace_gap', 'practice_best_gap']))
 raw = raw.merge(practice, on=['year', 'round', 'car_number'], how='left')
+# Boş antrenman verisinde sütunlar all-NaN/object kalır; feature hücresindeki median/rolling için float şart
+raw[['practice_pace_gap', 'practice_best_gap']] = raw[['practice_pace_gap', 'practice_best_gap']].astype('float64')
 raw.to_csv('f1_raw_results.csv', index=False)
 print(raw.shape)
 if practice_fails:
