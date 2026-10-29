@@ -9,6 +9,7 @@ prediction time from the bundled training history:
 - Pace relative to the teammate (qualifying gap and grid)
 - Championship standing before the race
 - Circuit overtaking profile (average position change)
+- Free-practice long-run pace (neutral values: no practice data in the simulator)
 """
 
 import os
@@ -77,6 +78,13 @@ class TrainedF1Model:
         finishers = self.history[self.history['dnf'] == 0]
         self._circuit_change = finishers.assign(abs_gain=finishers['gain'].abs()) \
             .groupby('circuit')['abs_gain'].mean()
+
+        # Practice pace is unavailable in the simulator -> neutral training-history medians
+        self._practice_median = {
+            col: float(self.history[col].median())
+            for col in ('practice_pace_gap', 'practice_best_gap')
+            if col in self.history.columns
+        }
 
     @property
     def feature_importances(self) -> Dict[str, float]:
@@ -156,6 +164,15 @@ class TrainedF1Model:
                 'team_id': team_id,
                 **self._team_form(team_id),
             })
+            # No free practice session in the simulator -> neutral practice features
+            row['has_practice'] = 0
+            row['practice_pace_gap'] = self._practice_median.get('practice_pace_gap', 0.0)
+            row['practice_best_gap'] = self._practice_median.get('practice_best_gap', 0.0)
+            row['practice_form_5'] = row['practice_pace_gap']
+            if len(past) and 'has_practice' in past.columns:
+                seen = past.loc[past['has_practice'] == 1, 'practice_pace_gap'].tail(5)
+                if len(seen):
+                    row['practice_form_5'] = seen.mean()
             rows.append(row)
 
         frame = pd.DataFrame(rows)

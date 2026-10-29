@@ -134,6 +134,7 @@ for year in YEARS:
             'date': pd.Timestamp(race['date']),
             'driver': x['Driver']['driverId'],
             'team': x['Constructor']['constructorId'],
+            'car_number': str(x['number']),
             'grid': int(x['grid']),
             'finish': int(x['position']),
             'points': float(x['points']),
@@ -150,6 +151,83 @@ raw.to_csv('f1_raw_results.csv', index=False)
 print(raw.shape)
 if weather_fails:
     print(f'⚠️ {len(weather_fails)} yarışta hava verisi alınamadı (kuru varsayıldı):', weather_fails[:5])
+""")
+
+md(r"""
+## 1b. Antrenman temposu (FastF1, 2022+)
+
+Yarış temposunun asıl göstergesi **uzun run** hızıdır: pilotun pit yapmadan arka arkaya attığı turlar. Buradan iki özellik çıkıyor: uzun run ortalamasının seansın en hızlısına göre farkı (`practice_pace_gap`) ve tek turun farkı (`practice_best_gap`).
+
+Sadece 2022+ alınıyor: mevcut kural dönemi ve FastF1'in saatlik istek limiti (seans başına **tek** istek).
+""")
+
+code(r"""
+# 2022 = mevcut kural döneminin başlangıcı; ayrıca FastF1 saatlik istek limitini aşmamak için
+PRACTICE_YEARS = range(2022, 2027)
+
+
+def practice_session(year, rnd):
+    # Sprint hafta sonlarında sadece FP1 yapılır
+    sprint = ('sprint', 'sprint_shootout', 'sprint_qualifying')
+    return 'FP1' if fastf1.get_event(year, rnd)['EventFormat'] in sprint else 'FP2'
+
+
+def practice_pace(year, rnd):
+    # Seans başına tek istek: tüm tur verisi tek çağrıda gelir
+    laps_data, _ = f1api.timing_data(fastf1.get_session(year, rnd, practice_session(year, rnd)).api_path)
+    laps = laps_data[laps_data['LapTime'].notna()].copy()
+    laps['seconds'] = laps['LapTime'].dt.total_seconds()
+    # Pit giriş/çıkış turları temsil edici değil
+    laps['invalid'] = laps['PitInTime'].notna() | laps['PitOutTime'].notna()
+
+    drivers = []
+    for drv, dlaps in laps.groupby('Driver'):
+        dlaps = dlaps.sort_values('NumberOfLaps')
+        valid = dlaps[~dlaps['invalid']]
+        if valid.empty:
+            continue
+        best = valid['seconds'].min()
+        # Stint'ler pit çıkışında bölünür; bir stintte en az 5 geçerli tur varsa "uzun run"
+        dlaps['stint'] = dlaps['PitOutTime'].notna().cumsum()
+        long_run_laps = []
+        for _, stint in dlaps.groupby('stint'):
+            runs = stint[(~stint['invalid']) & (stint['seconds'] <= best * 1.07)]
+            if len(runs) >= 5:
+                long_run_laps.append(runs['seconds'])
+        drivers.append({
+            'year': year,
+            'round': rnd,
+            'car_number': str(drv),
+            'long_run': pd.concat(long_run_laps).median() if long_run_laps else np.nan,
+            'best': best,
+        })
+
+    pace = pd.DataFrame(drivers, columns=['year', 'round', 'car_number', 'long_run', 'best'])
+    pace['practice_pace_gap'] = (pace['long_run'] / pace['long_run'].min() - 1) * 100
+    pace['practice_best_gap'] = (pace['best'] / pace['best'].min() - 1) * 100
+    return pace[['year', 'round', 'car_number', 'practice_pace_gap', 'practice_best_gap']]
+
+
+practice_frames, practice_fails = [], []
+for year, rnd in raw[['year', 'round']].drop_duplicates().itertuples(index=False):
+    if year not in PRACTICE_YEARS:
+        continue
+    try:
+        practice_frames.append(practice_pace(year, rnd))
+        print(f'✅ {year} R{rnd:02d} antrenman temposu')
+    except fastf1.exceptions.RateLimitExceededError:
+        print('⚠️ FastF1 istek limiti doldu — kalan antrenman verisi atlanıyor')
+        break
+    except Exception as e:
+        practice_fails.append(f'{year} R{rnd}: {type(e).__name__}')
+
+practice = (pd.concat(practice_frames, ignore_index=True) if practice_frames
+            else pd.DataFrame(columns=['year', 'round', 'car_number', 'practice_pace_gap', 'practice_best_gap']))
+raw = raw.merge(practice, on=['year', 'round', 'car_number'], how='left')
+raw.to_csv('f1_raw_results.csv', index=False)
+print(raw.shape)
+if practice_fails:
+    print(f'⚠️ {len(practice_fails)} yarışta antrenman verisi alınamadı:', practice_fails[:5])
 """)
 
 md(r"""
@@ -238,6 +316,14 @@ df['reg_era_2026'] = (df['year'] >= 2026).astype(int)
 # Grid cezası: sıralamadaki yerinden daha geride başladıysa kaybedilen pozisyon sayısı
 df['quali_pos'] = df['quali_pos'].fillna(df['grid'])
 df['grid_penalty'] = (df['grid'] - df['quali_pos']).clip(lower=0)
+# Antrenman temposu: uzun run farkı, tek tur farkı ve son 5 yarıştaki ortalama
+# has_practice ve form, doldurmadan ÖNCE hesaplanır (yarışta antrenman verisi var mı?)
+df['has_practice'] = df['practice_pace_gap'].notna().astype(int)
+df['practice_form_5'] = past_rolling(df, 'driver', 'practice_pace_gap', 5)
+# Eksik antrenman verisi: önce o yarışın medyanı, sonra tüm verinin medyanı
+for c in ['practice_pace_gap', 'practice_best_gap']:
+    df[c] = df[c].fillna(df.groupby('race_id')[c].transform('median')).fillna(df[c].median())
+df['practice_form_5'] = df['practice_form_5'].fillna(df['practice_pace_gap'].median())
 
 BASE_FEATURES = [
     'grid', 'quali_gap_pct', 'is_wet', 'round',
@@ -250,6 +336,7 @@ FEATURES = BASE_FEATURES + [
     'driver_season_form', 'team_season_form', 'teammate_quali_delta',
     'grid_vs_teammate', 'grid_vs_team_form', 'reg_era_2026',
     'grid_penalty',
+    'practice_pace_gap', 'practice_best_gap', 'practice_form_5', 'has_practice',
 ]
 print(df[FEATURES].describe().T[['mean', 'min', 'max']])
 """)
