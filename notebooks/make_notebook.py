@@ -124,6 +124,7 @@ for year in YEARS:
             continue
         best = {q['Driver']['driverId']: pd.Series([lap_seconds(q.get(k)) for k in ('Q1', 'Q2', 'Q3')]).min()
                 for q in quali.get(rnd, {'rows': []})['rows']}
+        quali_pos = {q['Driver']['driverId']: int(q['position']) for q in quali.get(rnd, {'rows': []})['rows']}
         pole = np.nanmin(list(best.values())) if best else np.nan
         rows = pd.DataFrame([{
             'year': year,
@@ -138,6 +139,7 @@ for year in YEARS:
             'points': float(x['points']),
             'status': x['status'],
             'quali_gap_pct': (best.get(x['Driver']['driverId'], np.nan) / pole - 1) * 100,
+            'quali_pos': quali_pos.get(x['Driver']['driverId'], np.nan),
         } for x in race['rows']])
         rows['is_wet'] = is_wet_race(year, rnd)
         frames.append(rows)
@@ -233,6 +235,9 @@ df['grid_vs_teammate'] = df['grid'] - df.groupby(team_key)['grid'].transform('me
 # Grid ile aracın normal temposu arasındaki fark (kötü sıralama → toparlama potansiyeli)
 df['grid_vs_team_form'] = df['grid'] - df['team_form_5']
 df['reg_era_2026'] = (df['year'] >= 2026).astype(int)
+# Grid cezası: sıralamadaki yerinden daha geride başladıysa kaybedilen pozisyon sayısı
+df['quali_pos'] = df['quali_pos'].fillna(df['grid'])
+df['grid_penalty'] = (df['grid'] - df['quali_pos']).clip(lower=0)
 
 BASE_FEATURES = [
     'grid', 'quali_gap_pct', 'is_wet', 'round',
@@ -244,6 +249,7 @@ BASE_FEATURES = [
 FEATURES = BASE_FEATURES + [
     'driver_season_form', 'team_season_form', 'teammate_quali_delta',
     'grid_vs_teammate', 'grid_vs_team_form', 'reg_era_2026',
+    'grid_penalty',
 ]
 print(df[FEATURES].describe().T[['mean', 'min', 'max']])
 """)

@@ -152,6 +152,7 @@ class TrainedF1Model:
                 'season_points_before': season_points.get(did, 0.0),
                 'circuit_pos_change': self._circuit_change.get(circuit, self._circuit_change.median()),
                 'reg_era_2026': int(self.season >= 2026),
+                'grid_penalty': 0,
                 'team_id': team_id,
                 **self._team_form(team_id),
             })
