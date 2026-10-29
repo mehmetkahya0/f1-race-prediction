@@ -11,6 +11,8 @@ import numpy as np
 from dataclasses import dataclass
 from enum import Enum
 
+from models.strategy import get_tire_strategy, simulate_pit_stop
+
 
 class RaceIncident(Enum):
     """Types of incidents that can occur during a race."""
@@ -39,6 +41,7 @@ class DriverRaceResult:
     incident_description: str = ""
     points: int = 0
     positions_gained: int = 0  # New metric
+    pit_stops: int = 0
     
     def __str__(self):
         if self.status == 'Finished':
@@ -63,6 +66,8 @@ class RaceSimulator:
     DRIVER_SKILL_WEIGHT = 0.35  # How much driver matters vs car
     CAR_PERFORMANCE_WEIGHT = 0.45  # How much car matters
     RANDOM_FACTOR_WEIGHT = 0.20  # Controlled randomness
+    PIT_LANE_LOSS = 20.0  # Seconds lost driving through the pit lane (excluding stationary time)
+    PIT_LAP_JITTER = 3  # Each driver pits within +/- this many laps of the planned lap
     
     def __init__(self, track, drivers, teams, weather, qualifying_results=None):
         """
@@ -435,6 +440,18 @@ class RaceSimulator:
         driver_times = {driver: 0.0 for driver in self.grid_positions}
         driver_lap_times = {driver: [] for driver in self.grid_positions}
         
+        # Build the pit plan from the strategy module, adding a small random spread
+        # so that drivers do not all pit on exactly the same lap.
+        planned_stops = get_tire_strategy(self.track, self.weather, total_laps)
+        driver_pit_laps = {}
+        for driver in self.grid_positions:
+            pit_laps = []
+            for planned_lap, _compound in planned_stops:
+                pit_lap = planned_lap + random.randint(-self.PIT_LAP_JITTER, self.PIT_LAP_JITTER)
+                pit_lap = max(2, min(pit_lap, total_laps - 1))
+                pit_laps.append(pit_lap)
+            driver_pit_laps[driver] = sorted(set(pit_laps))
+        
         # Track the fastest lap
         fastest_lap = {'driver': None, 'time': float('inf')}
         
@@ -484,6 +501,15 @@ class RaceSimulator:
                 
                 # Apply lap time to cumulative race time
                 driver_times[driver] += final_lap_time
+                
+                # Pit stop on a planned lap: add pit lane loss and stationary time,
+                # then fit a fresh set of tires (counted as one lap old below).
+                if lap in driver_pit_laps[driver]:
+                    pit_efficiency = getattr(team, 'pit_efficiency', 85)
+                    stop = simulate_pit_stop(pit_efficiency)
+                    driver_times[driver] += self.PIT_LANE_LOSS + stop['duration']
+                    driver_status[driver]['tire_age'] = 0
+                    driver_status[driver]['pit_stops'] += 1
                 
                 # Update tire age
                 driver_status[driver]['tire_age'] += 1
@@ -545,7 +571,8 @@ class RaceSimulator:
                 fastest_lap=(driver == fastest_lap['driver']),
                 incident=driver_status[driver]['incident'],
                 incident_description=driver_status[driver]['description'],
-                positions_gained=positions_gained
+                positions_gained=positions_gained,
+                pit_stops=driver_status[driver]['pit_stops']
             )
             
             # Calculate points (2026 system - same as current)
