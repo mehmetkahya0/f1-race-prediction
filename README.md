@@ -76,7 +76,7 @@ This project is a **comprehensive Formula 1 race simulation system** that models
 
 - **Qualifying Simulation**: Q1/Q2/Q3 format with realistic time distributions
 - **Race Simulation**: Full race distance with lap-by-lap position tracking
-- **Strategy Engine**: Optimal pit window calculation with undercut/overcut modeling
+- **Pit Stops**: Tyre-life based pit plan per driver, pit-lane loss and team-efficiency-based stop times
 - **Incident System**: Mechanical failures, collisions, penalties, and energy system issues
 - **Weather Dynamics**: Location-based patterns with real-time condition changes
 
@@ -306,32 +306,21 @@ class TirePhysicsModel:
         return 3.0 * (degradation_pct ** 2)
 ```
 
-#### Pit Strategy Optimization
+#### Pit Strategy
+
+`models/strategy.py` plans the stops from each compound's expected tyre life on the track (`get_tire_strategy`). In the race (`RaceSimulator.simulate_race`):
 
 ```python
-def calculate_optimal_pit_window(race_laps, tire_model, track):
-    """
-    Dynamic programming approach to pit window optimization.
-    
-    Minimize: Σ(lap_time) + pit_stop_time × num_stops
-    
-    Considers:
-    - Tire degradation curves
-    - Pit lane time loss
-    - Track position importance
-    - Undercut potential
-    """
-    pit_loss = 22.0 + track.pit_time_delta  # Base pit lane loss
-    
-    # One-stop strategy calculation
-    optimal_lap = race_laps // 2  # Start point
-    
-    # Adjust for tire wear characteristics
-    if track.tyre_wear > 7:  # High degradation track
-        optimal_lap -= 5  # Pit earlier
-    
-    return optimal_lap, pit_loss
+PIT_LANE_LOSS = 20.0   # seconds lost driving through the pit lane
+PIT_LAP_JITTER = 3     # each driver pits within ±3 laps of the planned lap
+
+# on a pit lap:
+stop = simulate_pit_stop(team.pit_efficiency)       # stationary time + possible errors
+race_time += PIT_LANE_LOSS + stop['duration']
+tire_age = 0                                         # tyre-wear penalty starts over
 ```
+
+Compound pace differences and undercut/overcut effects are not modelled.
 
 ### 4. Weather Simulation System
 
@@ -420,7 +409,7 @@ class RealDataProvider:
 `EnhancedRaceSimulator` combines three sources:
 
 1. **Monte Carlo simulation** – every lap time comes from `_calculate_race_pace` (driver/car ratings, tyres, fuel, weather, randomness).
-2. **Real Fast-F1 data** – adjusts the qualifying order and applies post-race adjustments (overtaking, tyre management, consistency, reliability).
+2. **Real Fast-F1 data** – adjusts the qualifying order, shifts race pace by each driver's real gap to the field at this track, and applies post-race adjustments (overtaking, tyre management, consistency, reliability).
 3. **ML model** – before the race, each driver's ML expected finishing position becomes a per-lap pace offset, centred on the field:
 
 ```python
@@ -431,7 +420,7 @@ ML_SECONDS_PER_POSITION = 0.6   # simulator's typical per-lap gap between consec
 
 Over 40 seeded races this moves drivers the ML disagrees with by up to ~1.6 positions, while drivers the simulation and ML agree on stay put.
 
-> `calculate_lap_time` also contains a real-lap-time blend (`REAL_DATA_WEIGHT` / `SIMULATION_WEIGHT`), but the race loop does not call it, so it currently has no effect on results.
+Real lap times are applied the same way: each driver's gap to the field median at this track last season, × `REAL_DATA_WEIGHT` (0.5, clipped to ±2 s/lap), is added to their simulated pace.
 
 ---
 
