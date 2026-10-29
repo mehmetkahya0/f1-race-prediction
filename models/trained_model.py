@@ -4,8 +4,9 @@ Trained ML model loader for F1 Race Simulation.
 Loads the ensemble trained on real F1 results (see
 notebooks/train_f1_model_colab.ipynb) and rebuilds the same features at
 prediction time from the bundled training history:
-- Driver form (last 5 races), DNF rate, track history
-- Team form (last 5 races), team DNF rate
+- Driver form (last 5 races and current season), DNF rate, track history
+- Team form (last 5 races and current season), team DNF rate
+- Pace relative to the teammate (qualifying gap and grid)
 - Championship standing before the race
 - Circuit overtaking profile (average position change)
 """
@@ -56,6 +57,8 @@ class TrainedF1Model:
 
         self.features: List[str] = bundle['features']
         self.weights: Dict[str, float] = bundle['weights']
+        # 'delta': models predict position change relative to the grid slot
+        self.target_mode: str = bundle.get('target_mode', 'abs')
         self.metadata = {k: bundle.get(k) for k in ('trained_on', 'created', 'versions', 'test_metrics')}
 
         self.models = dict(bundle['models'])
@@ -93,13 +96,17 @@ class TrainedF1Model:
     def _team_form(self, team_id: str) -> Dict[str, float]:
         team_rows = self.history[self.history['team'] == team_id]
         if team_rows.empty:
-            return {'team_form_5': 12.0, 'team_points_5': 0.0, 'team_dnf_10': self._mean_dnf}
+            return {'team_form_5': 12.0, 'team_points_5': 0.0, 'team_dnf_10': self._mean_dnf,
+                    'team_season_form': 12.0}
         per_race = team_rows.groupby('race_id').agg(
             t_finish=('finish', 'mean'), t_points=('points', 'sum'), t_dnf=('dnf', 'mean'))
+        this_season = per_race[per_race.index // 100 == self.season]['t_finish']
+        team_form = per_race['t_finish'].tail(5).mean()
         return {
-            'team_form_5': per_race['t_finish'].tail(5).mean(),
+            'team_form_5': team_form,
             'team_points_5': per_race['t_points'].tail(5).mean(),
             'team_dnf_10': per_race['t_dnf'].tail(10).mean(),
+            'team_season_form': this_season.mean() if len(this_season) else team_form,
         }
 
     def build_features(self, grid_positions: List, driver_teams: Dict, track,
@@ -131,6 +138,8 @@ class TrainedF1Model:
                     'driver_experience': len(past),
                 }
             at_track = past[past['circuit'] == circuit]['finish']
+            this_season = past[past['year'] == self.season]['finish']
+            team_id = self._team_id(team_name)
 
             row.update({
                 'grid': grid,
@@ -138,20 +147,28 @@ class TrainedF1Model:
                 'is_wet': int(is_wet),
                 'round': round_no,
                 'driver_form_5': driver_form,
+                'driver_season_form': this_season.mean() if len(this_season) else driver_form,
                 'driver_track_avg': at_track.mean() if len(at_track) else driver_form,
                 'season_points_before': season_points.get(did, 0.0),
                 'circuit_pos_change': self._circuit_change.get(circuit, self._circuit_change.median()),
-                **self._team_form(self._team_id(team_name)),
+                'reg_era_2026': int(self.season >= 2026),
+                'team_id': team_id,
+                **self._team_form(team_id),
             })
             rows.append(row)
 
         frame = pd.DataFrame(rows)
         frame['season_rank_before'] = frame['season_points_before'].rank(ascending=False, method='min')
+        by_team = frame.groupby('team_id')
+        frame['teammate_quali_delta'] = frame['quali_gap_pct'] - by_team['quali_gap_pct'].transform('mean')
+        frame['grid_vs_teammate'] = frame['grid'] - by_team['grid'].transform('mean')
+        frame['grid_vs_team_form'] = frame['grid'] - frame['team_form_5']
         return frame[self.features]
 
     def predict(self, X) -> Dict[str, np.ndarray]:
-        """Return per-model predictions plus the weighted ensemble."""
-        preds = {name: model.predict(X) for name, model in self.models.items()}
+        """Return per-model predicted finishing positions plus the weighted ensemble."""
+        offset = X['grid'].to_numpy() if self.target_mode == 'delta' else 0
+        preds = {name: model.predict(X) + offset for name, model in self.models.items()}
         preds['ensemble'] = sum(preds[name] * w for name, w in self.weights.items())
         return preds
 
