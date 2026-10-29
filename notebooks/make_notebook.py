@@ -62,7 +62,7 @@ DEVICE = 'cuda' if HAS_GPU else 'cpu'
 print('XGBoost device:', DEVICE)
 """)
 
-md("## 1. Veri indirme (Jolpica/Ergast: yarış + sıralama sonuçları, FastF1: hava durumu)")
+md("## 1. Veri indirme (Jolpica/Ergast: yarış + sıralama sonuçları, Open-Meteo: hava durumu)")
 
 code(r"""
 import requests
@@ -103,14 +103,38 @@ def lap_seconds(s):
     return int(m) * 60 + float(sec)
 
 
-def is_wet_race(year, rnd):
-    # Hava verisi F1 canlı zamanlamadan (Ergast limitine takılmaz); yoksa kuru varsay
+WET_MM = 0.5   # start öncesi 3 saat + yarışın ~3 saatinde düşen yağış eşiği (mm)
+
+
+def is_wet_race(race):
+    # Hava verisi Open-Meteo arşivinden (ERA5 reanalizi, ~25 km ızgara); F1 TV girişi gerekmez
+    loc = race['Circuit']['Location']
+    # Saat bilgisi çok eski yarışlarda yok; 13:00 UTC başlangıç varsay
+    start = int(race['time'][:2]) if race.get('time') else 13
     try:
-        wd = f1api.weather_data(fastf1.get_session(year, rnd, 'R').api_path)
-        rain = pd.Series(wd['Rainfall']).map(lambda v: str(v).lower() in ('true', '1'))
-        return int(rain.mean() > 0.1)
+        for attempt in range(8):
+            r = requests.get('https://archive-api.open-meteo.com/v1/archive', params={
+                'latitude': loc['lat'], 'longitude': loc['long'],
+                'start_date': race['date'], 'end_date': race['date'],
+                'hourly': 'precipitation', 'timezone': 'UTC'}, timeout=30)
+            if r.status_code == 429:
+                time.sleep(15 * (attempt + 1))
+                continue
+            r.raise_for_status()
+            break
+        else:
+            raise RuntimeError('HTTP 429')
+        hourly = r.json()['hourly']['precipitation']
+        # Yarış penceresi: start öncesi 3 saat + start ve sonraki 2 saat (alt sınır 0'da kırpılır);
+        # start öncesi yağan yağmur da pisti ıslak bırakır; None (arşiv gecikmesi) atlanır
+        window = [hourly[h] for h in range(max(start - 3, 0), start + 3) if h < len(hourly)]
+        window = [v for v in window if v is not None]
+        if not window:
+            weather_fails.append(f"{race['season']} R{race['round']}: yağış verisi yok")
+            return 0
+        return int(sum(window) >= WET_MM)
     except Exception as e:
-        weather_fails.append(f'{year} R{rnd}: {type(e).__name__}')
+        weather_fails.append(f"{race['season']} R{race['round']}: {type(e).__name__}")
         return 0
 
 
@@ -142,7 +166,7 @@ for year in YEARS:
             'quali_gap_pct': (best.get(x['Driver']['driverId'], np.nan) / pole - 1) * 100,
             'quali_pos': quali_pos.get(x['Driver']['driverId'], np.nan),
         } for x in race['rows']])
-        rows['is_wet'] = is_wet_race(year, rnd)
+        rows['is_wet'] = is_wet_race(race)
         frames.append(rows)
         print(f"✅ {year} R{rnd:02d} {race['raceName']}" + ('  🌧️' if rows['is_wet'].iat[0] else ''))
 
