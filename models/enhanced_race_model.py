@@ -28,8 +28,9 @@ class EnhancedRaceSimulator(RaceSimulator):
     """Enhanced race simulator that uses real F1 data and ML for accurate predictions."""
     
     # Enhanced weighting for 2026 regulations
-    REAL_DATA_WEIGHT = 0.50  # How much to weight real data vs simulation
-    SIMULATION_WEIGHT = 0.25
+    # Share of the driver's real per-lap gap to the field median (last
+    # season, this track) applied to the simulated pace
+    REAL_DATA_WEIGHT = 0.50
     ML_WEIGHT = 0.25  # New: ML prediction weight
     # Per-lap time gap that corresponds to one finishing position: the
     # simulator's typical per-lap gap between consecutive finishers
@@ -48,6 +49,8 @@ class EnhancedRaceSimulator(RaceSimulator):
         self.ml_predictions = None
         # Per-lap pace offsets (seconds) derived from ML predictions, keyed by driver
         self._ml_pace_offsets = {}
+        # Per-lap pace offsets (seconds) derived from real lap times, keyed by driver
+        self._real_pace_offsets = {}
         
         if self.use_ml:
             try:
@@ -141,37 +144,51 @@ class EnhancedRaceSimulator(RaceSimulator):
             self.grid_positions
         )
     
-    def calculate_lap_time(self, driver, team, lap_number, weather, tire_degradation=0):
-        """Calculate lap time with enhanced real data consideration for 2026."""
-        # Start with the base calculation
-        base_time = self._calculate_race_pace(driver, team, lap_number, tire_degradation)
+    def _compute_real_pace_offsets(self) -> Dict:
+        """
+        Compute per-lap pace offsets in seconds from real lap times.
         
-        # Apply real data adjustments if available
-        if self.real_data_enhancer and self.track_insights.get('lap_times'):
-            driver_abbrev = self.real_data_enhancer._get_driver_abbreviation(driver.name)
-            
-            if driver_abbrev in self.track_insights['lap_times']:
-                # Get real track lap time for this driver
-                real_lap_time = self.track_insights['lap_times'][driver_abbrev]
-                
-                # Blend real lap time with calculated time using configurable weights
-                adjusted_time = (real_lap_time * self.REAL_DATA_WEIGHT + 
-                               base_time * self.SIMULATION_WEIGHT)
-                
-                # Add controlled variation to make it realistic
-                consistency = driver.consistency / 100.0 if hasattr(driver, 'consistency') else 0.8
-                variation = np.random.normal(0, 0.3 * (1 - consistency * 0.5))
-                final_time = adjusted_time + variation
-                
-                logger.debug(f"{driver.name}: Base={base_time:.3f}s, Real={real_lap_time:.3f}s, Final={final_time:.3f}s")
-                return max(final_time, base_time * 0.85)  # Don't make it unrealistically fast
+        Uses the real mean lap times from last season at this track
+        (track_insights['lap_times']). For each driver with data the offset is
+        the driver's real per-lap gap to the field median, scaled by
+        REAL_DATA_WEIGHT, so real data shifts pace relative to the field
+        without changing the absolute lap time scale. A positive offset means
+        slower, i.e. the driver was slower than the field median last season.
+        Offsets are clipped to +/- 2.0 s to contain outliers from incidents.
         
-        return base_time
+        Returns:
+            Dict mapping driver -> offset in seconds per lap
+        """
+        if not self.real_data_enhancer:
+            return {}
+        
+        lap_times = self.track_insights.get('lap_times', {})
+        if len(lap_times) < 5:
+            return {}
+        
+        median_lap_time = float(np.median(list(lap_times.values())))
+        
+        offsets = {}
+        for driver in self.grid_positions:
+            abbr = self.real_data_enhancer._get_driver_abbreviation(driver.name)
+            if abbr in lap_times:
+                offset = self.REAL_DATA_WEIGHT * (lap_times[abbr] - median_lap_time)
+                # Clip outliers (real lap times may include incident laps)
+                offsets[driver] = max(-2.0, min(2.0, offset))
+        
+        if offsets:
+            min_offset = min(offsets.values())
+            max_offset = max(offsets.values())
+            logger.info(f"Real pace offsets applied: {len(offsets)} drivers, min={min_offset:+.3f}s/lap, max={max_offset:+.3f}s/lap")
+        
+        return offsets
     
     def _calculate_race_pace(self, driver, team, lap_number=1, tire_age=0):
-        """Calculate race pace with ML-derived per-lap pace offsets applied."""
+        """Calculate race pace with ML-derived and real-data per-lap pace offsets applied."""
         base_time = super()._calculate_race_pace(driver, team, lap_number, tire_age)
-        return base_time + self._ml_pace_offsets.get(driver, 0.0)
+        return (base_time +
+                self._ml_pace_offsets.get(driver, 0.0) +
+                self._real_pace_offsets.get(driver, 0.0))
     
     def simulate_qualifying(self):
         """Enhanced qualifying simulation with real data consideration for 2026."""
@@ -264,6 +281,7 @@ class EnhancedRaceSimulator(RaceSimulator):
         if not self.grid_positions:
             self.simulate_qualifying()
         self._ml_pace_offsets = self._compute_ml_pace_offsets()
+        self._real_pace_offsets = self._compute_real_pace_offsets()
         
         # Get base race results
         results = super().simulate_race()
@@ -375,26 +393,6 @@ class EnhancedRaceSimulator(RaceSimulator):
         logger.info(f"Applied real data adjustments to {len(all_results)} drivers")
         return all_results
     
-    def calculate_weather_impact(self, driver, weather, base_time):
-        """Enhanced weather impact calculation using real data for 2026."""
-        # Start with base weather impact from parent class
-        weather_impact = super().calculate_weather_impact(driver, weather, base_time)
-        
-        # Apply real data weather insights if available
-        if self.track_insights.get('weather_history'):
-            weather_history = self.track_insights['weather_history']
-            
-            # If historical weather data shows this track tends to be rainy
-            if weather_history.get('rain_probability', False) and weather.condition in ['wet', 'mixed']:
-                wet_skill = driver.skill_wet if hasattr(driver, 'skill_wet') else 80
-                # Drivers with high wet skill get even more advantage on historically wet tracks
-                if wet_skill > 88:
-                    weather_impact *= 0.85  # Even better in wet conditions
-                elif wet_skill < 72:
-                    weather_impact *= 1.12  # Even worse in wet conditions
-        
-        return weather_impact
-    
     def get_simulation_metadata(self) -> Dict:
         """Get metadata about the simulation including real data usage."""
         metadata = {
@@ -402,9 +400,9 @@ class EnhancedRaceSimulator(RaceSimulator):
             'track_insights_available': bool(self.track_insights),
             'simulation_type': 'Enhanced with Real F1 Data (2026 Regulations)',
             'real_data_weight': self.REAL_DATA_WEIGHT,
-            'simulation_weight': self.SIMULATION_WEIGHT,
             'ml_weight': self.ML_WEIGHT,
-            'ml_pace_applied': bool(self._ml_pace_offsets)
+            'ml_pace_applied': bool(self._ml_pace_offsets),
+            'real_pace_applied': bool(self._real_pace_offsets)
         }
         
         if self.real_data_enhancer:

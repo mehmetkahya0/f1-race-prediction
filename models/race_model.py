@@ -63,9 +63,6 @@ class RaceSimulator:
     
     # Constants for more consistent simulation
     BASE_LAP_TIME = 90.0  # Base lap time in seconds
-    DRIVER_SKILL_WEIGHT = 0.35  # How much driver matters vs car
-    CAR_PERFORMANCE_WEIGHT = 0.45  # How much car matters
-    RANDOM_FACTOR_WEIGHT = 0.20  # Controlled randomness
     PIT_LANE_LOSS = 20.0  # Seconds lost driving through the pit lane (excluding stationary time)
     PIT_LAP_JITTER = 3  # Each driver pits within +/- this many laps of the planned lap
     
@@ -601,10 +598,3 @@ class RaceSimulator:
     def calculate_lap_time(self, driver, team, lap_number, weather, tire_degradation=0):
         """Calculate lap time for enhanced model compatibility."""
         return self._calculate_race_pace(driver, team, lap_number, tire_degradation)
-    
-    def calculate_weather_impact(self, driver, weather, base_time):
-        """Calculate weather impact for enhanced model compatibility."""
-        if weather.is_wet:
-            wet_skill = driver.skill_wet / 100.0 if hasattr(driver, 'skill_wet') else 0.8
-            return base_time * (1.1 - wet_skill * 0.1)
-        return base_time
