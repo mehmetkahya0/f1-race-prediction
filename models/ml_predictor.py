@@ -44,6 +44,8 @@ class MLPrediction:
     position_probabilities: Dict[int, float]  # Position -> Probability
     feature_importance: Dict[str, float]
     model_agreement: float  # How much models agree
+    win_probability: Optional[float] = None
+    podium_probability: Optional[float] = None
 
 
 class FeatureExtractor:
@@ -321,11 +323,13 @@ class F1MLPredictor:
                     grid_positions, teams, track, is_wet, self._round_for(track)
                 )
                 preds = self.trained_model.predict(X)
+                probabilities = self.trained_model.predict_probabilities(X)
                 return self._build_predictions(
                     preds['ensemble'],
                     [preds[name] for name in self.trained_model.weights],
                     grid_positions,
-                    self.trained_model.feature_importances
+                    self.trained_model.feature_importances,
+                    probabilities=probabilities
                 )
             except Exception as e:
                 logger.warning(f"Trained model prediction failed, using synthetic models: {e}")
@@ -375,7 +379,8 @@ class F1MLPredictor:
         return names.index(track.name) + 1 if track.name in names else len(names) // 2
 
     def _build_predictions(self, ensemble_preds, model_preds: List[np.ndarray],
-                           grid_positions: List, feature_importance: Dict[str, float]) -> List[MLPrediction]:
+                           grid_positions: List, feature_importance: Dict[str, float],
+                           probabilities: Optional[Dict[str, np.ndarray]] = None) -> List[MLPrediction]:
         """Turn raw position estimates into MLPrediction objects with confidence."""
         # Calculate model agreement (standard deviation between models)
         model_std = np.std(model_preds, axis=0)
@@ -406,7 +411,9 @@ class F1MLPredictor:
                 confidence=float(confidence),
                 position_probabilities=position_probs,
                 feature_importance=feature_importance,
-                model_agreement=float(model_agreement[i])
+                model_agreement=float(model_agreement[i]),
+                win_probability=float(probabilities['win'][i]) if probabilities and 'win' in probabilities else None,
+                podium_probability=float(probabilities['podium'][i]) if probabilities and 'podium' in probabilities else None,
             ))
         
         return predictions
@@ -448,7 +455,19 @@ class F1MLPredictor:
                 'predicted_position': pred.predicted_position,
                 'confidence': pred.confidence
             })
-        
+
+        # Win/podium classifier outputs: top 3 win favorites
+        if any(p.win_probability is not None for p in predictions):
+            favorites = sorted(zip(predictions, drivers),
+                               key=lambda x: x[0].win_probability or 0.0,
+                               reverse=True)[:3]
+            summary['win_favorites'] = [
+                {'driver': driver.name,
+                 'win_probability': pred.win_probability,
+                 'podium_probability': pred.podium_probability}
+                for pred, driver in favorites
+            ]
+
         return summary
     
     def evaluate_prediction_accuracy(self, predictions: List[MLPrediction],

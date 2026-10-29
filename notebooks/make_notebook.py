@@ -461,6 +461,85 @@ test_metrics = {r['model'] if r['config'] == '-' else f"{r['config']}/{r['model'
 pd.DataFrame(test_metrics).T.loc[['baseline (grid)', 'A/ensemble', f'{BEST_CONFIG}/{BEST_MODEL}']]
 """)
 
+md(r"""
+## 3b. Galibiyet ve podyum olasılığı
+
+Konum tahmininin yanına iki sınıflandırıcı eklenir: pilot yarışı kazanır mı (`finish = 1`) ve podyuma çıkar mı (`finish <= 3`). Olasılıklar her yarışta normalize edilir — kazanma olasılıklarının toplamı 1'e, podyum olasılıklarının toplamı 3'e eşitlenir — ve grid pozisyonuna dayalı ampirik bir temel ile karşılaştırılır. Değerlendirme yine walk-forward yapılır; LogLoss, Brier skoru ve favori isabeti (en yüksek olasılıklı pilotun hedefi tutturup tuttmadığı) 2025 ve 2026 için ayrı ayrı raporlanır.
+""")
+
+code(r"""
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import log_loss, brier_score_loss
+
+CLASS_TARGETS = {'win': 1, 'podium': 3}   # hedef: finish <= değer
+
+
+def fit_classifiers(train, features, half_life):
+    # Kazanma ve podyum sınıflandırıcıları; örnek ağırlığı fit_models ile aynı formül
+    w = None if half_life is None else 0.5 ** ((train['year'].max() - train['year']) / half_life)
+    clfs = {}
+    for name, k in CLASS_TARGETS.items():
+        clf = RandomForestClassifier(n_estimators=300, min_samples_leaf=10, n_jobs=-1, random_state=42)
+        clf.fit(train[features], train['finish'] <= k, sample_weight=w)
+        clfs[name] = clf
+    return clfs
+
+
+def normalize(frame, prob, total):
+    # Aynı yarıştaki olasılıklar toplamı 'total' olacak şekilde ölçeklenir,
+    # sonra sıfır olasılıkların log_loss'u patlatmaması için [1e-3, 1 - 1e-3]'e kırpılır
+    out = frame[['race_id']].assign(_p=np.asarray(prob, dtype=float))
+    sums = out.groupby('race_id')['_p'].transform('sum')
+    sizes = out.groupby('race_id')['_p'].transform('size')
+    out['_p'] = np.where(sums > 0, out['_p'] * total / sums, total / sizes)
+    return np.clip(out['_p'].to_numpy(), 1e-3, 1 - 1e-3)
+
+
+def grid_baseline(train, frame, k):
+    # Ampirik P(finish <= k | grid), add-one smoothing; görülmeyen grid → genel oran
+    g = train.assign(_hit=(train['finish'] <= k).astype(int)).groupby('grid')['_hit'].agg(['sum', 'count'])
+    rate = (g['sum'] + 1) / (g['count'] + 2)
+    prob = frame['grid'].map(rate).fillna((train['finish'] <= k).mean())
+    return normalize(frame, prob, k)   # toplam da hedef değeriyle aynı: win'de 1, podyumda 3
+
+
+# 3. bölümdeki gibi walk-forward: her yarış sadece önceki verilerle eğitilen modelle değerlendirilir
+class_races = sorted(df.loc[df['year'].isin((2025, 2026)), 'race_id'].unique())
+model_out, base_out = [], []
+for i in range(0, len(class_races), 2):
+    chunk = class_races[i:i + 2]
+    train = df[df['race_id'] < chunk[0]]
+    test = df[df['race_id'].isin(chunk)]
+    clfs = fit_classifiers(train, best_features, BEST_HALF_LIFE)
+    for name, k in CLASS_TARGETS.items():
+        cols = test[['race_id', 'year', 'driver', 'grid', 'finish']]
+        model_out.append(cols.assign(target=name, prob=normalize(test, clfs[name].predict_proba(test[best_features])[:, 1], k)))
+        base_out.append(cols.assign(target=name, prob=grid_baseline(train, test, k)))
+
+model_preds = pd.concat(model_out, ignore_index=True)
+baseline_preds = pd.concat(base_out, ignore_index=True)
+
+
+def class_report(frame, label):
+    # Favori isabeti: en yüksek olasılıklı pilot gerçekten kazandı mı / podyuma girdi mi
+    rows = []
+    for (target, year), r in frame.groupby(['target', 'year']):
+        k = CLASS_TARGETS[target]
+        favorites = r.groupby('race_id').apply(lambda g: g.loc[g['prob'].idxmax(), 'finish'] <= k)
+        rows.append({'model': label, 'target': target, 'yıl': int(year),
+                     'LogLoss': round(log_loss(r['finish'] <= k, r['prob']), 3),
+                     'Brier': round(brier_score_loss(r['finish'] <= k, r['prob']), 3),
+                     'Favori isabet': round(favorites.mean(), 3)})
+    return pd.DataFrame(rows)
+
+
+class_table = pd.concat([class_report(model_preds, 'model'), class_report(baseline_preds, 'baseline (grid)')],
+                        ignore_index=True)
+class_metrics = {f"{r['model']}/{r['target']}": {k: r[k] for k in ('LogLoss', 'Brier', 'Favori isabet')}
+                 for _, r in class_table[class_table['yıl'] == 2026].iterrows()}
+class_table
+""")
+
 md("## 4. Tüm veriyle son eğitim ve kaydetme")
 
 code(r"""
@@ -469,6 +548,7 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 
 final = fit_models(df, best_features, TARGET_MODE, BEST_HALF_LIFE)
+final_clf = fit_classifiers(df, best_features, BEST_HALF_LIFE)
 
 imp = pd.Series(final['rf'].feature_importances_, index=best_features).sort_values()
 imp.plot.barh(figsize=(7, 7), title='Random Forest - özellik önemi')
@@ -482,6 +562,8 @@ bundle = {
     'features': best_features,
     'target_mode': TARGET_MODE,
     'half_life': BEST_HALF_LIFE,
+    'classifiers': final_clf,
+    'class_metrics': class_metrics,
     'team_aliases': TEAM_ALIASES,
     'test_metrics': test_metrics,
     'trained_on': f"{df['year'].min()}-{df['year'].max()} ({df['race_id'].nunique()} yarış)",

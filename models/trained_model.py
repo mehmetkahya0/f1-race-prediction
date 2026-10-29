@@ -67,6 +67,9 @@ class TrainedF1Model:
         xgb_model.load_model(bytearray(bundle['xgb_json'], 'utf-8'))
         self.models['xgb'] = xgb_model
 
+        # Win/podium classifiers; older bundles have none
+        self.classifiers = bundle.get('classifiers', {})
+
         self.history = history.sort_values(['race_id', 'finish']).reset_index(drop=True)
         self.season = int(self.history['year'].max())
         self._known_drivers = set(self.history['driver'])
@@ -189,6 +192,19 @@ class TrainedF1Model:
         preds = {name: model.predict(X) + offset for name, model in self.models.items()}
         preds['ensemble'] = sum(preds[name] * w for name, w in self.weights.items())
         return preds
+
+    def predict_probabilities(self, X) -> Dict[str, np.ndarray]:
+        """Win/podium probabilities from the bundled classifiers, normalized per field."""
+        probs = {}
+        for name in ('win', 'podium'):
+            clf = self.classifiers.get(name)
+            if clf is None:
+                continue
+            p = clf.predict_proba(X)[:, 1].astype(float)
+            # The field's probabilities must sum to 1 (win) or 3 (podium)
+            total = min(3, len(X)) if name == 'podium' else 1
+            probs[name] = np.clip(p / max(p.sum(), 1e-12) * total, 0.0, 1.0)
+        return probs
 
 
 def load_trained_model() -> Optional[TrainedF1Model]:

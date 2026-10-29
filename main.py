@@ -220,14 +220,15 @@ def show_analysis_menu(simulator, qualifying_results, race_results):
         print("1. Show qualifying vs race performance analysis")
         print("2. Show detailed race statistics")
         print("3. Show real F1 data insights")
-        print("4. Visualize basic race progress")
-        print("5. Generate advanced visualizations")
-        print("6. Generate all visualizations (saves to visualized-graphs folder)")
-        print("7. Simulate another race")
-        print("8. Quit")
+        print("4. Show ML win & podium probabilities")
+        print("5. Visualize basic race progress")
+        print("6. Generate advanced visualizations")
+        print("7. Generate all visualizations (saves to visualized-graphs folder)")
+        print("8. Simulate another race")
+        print("9. Quit")
         
         try:
-            choice = input("\nSelect an option (1-8): ")
+            choice = input("\nSelect an option (1-9): ")
             choice = int(choice)
             
             if choice == 1:
@@ -251,16 +252,20 @@ def show_analysis_menu(simulator, qualifying_results, race_results):
                 show_real_data_insights(simulator)
                 
             elif choice == 4:
+                # ML win & podium probabilities
+                show_ml_probabilities(simulator)
+                
+            elif choice == 5:
                 # Visualize race progress
                 print("\nGenerating race progress visualization...")
                 plot_race_progress(race_results, track.laps)
                 simulate_live_race_progress(race_results, track.laps, track.name)
                 
-            elif choice == 5:
+            elif choice == 6:
                 # Advanced visualizations submenu
                 show_visualization_menu(race_results, track)
                 
-            elif choice == 6:
+            elif choice == 7:
                 # Generate all visualizations
                 print("\nGenerating all visualizations...")
                 visualizations = generate_all_visualizations(race_results, track.laps, track.name)
@@ -268,15 +273,15 @@ def show_analysis_menu(simulator, qualifying_results, race_results):
                 for viz_type, path in visualizations.items():
                     print(f"- {viz_type}: {os.path.basename(path)}")
                 
-            elif choice == 7:
+            elif choice == 8:
                 # Simulate another race
                 return True
                 
-            elif choice == 8:
+            elif choice == 9:
                 return False
                 
             else:
-                print("Please enter a number between 1 and 8")
+                print("Please enter a number between 1 and 9")
                 
         except ValueError:
             print("Please enter a valid number")
@@ -422,6 +427,51 @@ def show_real_data_insights(simulator):
         print("❌ Enhanced simulation not available.")
         print("Real F1 data integration is disabled or unavailable.")
     
+    print("=" * 70)
+
+
+def show_ml_probabilities(simulator):
+    """Show ML win and podium probabilities for the drivers in grid order."""
+    print("\n" + "=" * 70)
+    print("🎯 ML WIN & PODIUM PROBABILITIES")
+    print("=" * 70)
+
+    if not hasattr(simulator, 'get_ml_predictions'):
+        print("❌ ML predictions are not available for this simulator.")
+        print("=" * 70)
+        return
+
+    predictions = simulator.get_ml_predictions()
+    if not predictions:
+        print("❌ ML predictions are unavailable (ML disabled or model not loaded).")
+        print("=" * 70)
+        return
+
+    has_probabilities = any(p.win_probability is not None for p in predictions)
+    rows = []
+    for i, driver in enumerate(simulator.grid_positions):
+        pred = predictions[i]
+        rows.append({
+            'driver': driver.name,
+            'grid': i + 1,
+            'win': pred.win_probability,
+            'podium': pred.podium_probability,
+            'pos': pred.predicted_position,
+        })
+
+    if has_probabilities:
+        rows.sort(key=lambda r: r['win'] or 0.0, reverse=True)
+        table = [[r['driver'], r['grid'],
+                  f"{r['win'] * 100:.1f}%", f"{r['podium'] * 100:.1f}%",
+                  r['pos']] for r in rows]
+        headers = ["Driver", "Grid", "Win %", "Podium %", "Predicted Pos"]
+        print(tabulate_func(table, headers=headers, tablefmt="pipe"))
+    else:
+        table = [[r['driver'], r['grid'], r['pos']] for r in rows]
+        headers = ["Driver", "Grid", "Predicted Pos"]
+        print(tabulate_func(table, headers=headers, tablefmt="pipe"))
+        print("\nWin/podium probabilities need a trained model bundle with classifiers.")
+
     print("=" * 70)
 
 
