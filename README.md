@@ -21,6 +21,7 @@
 ![No login](https://img.shields.io/badge/F1_account-not_required-2E7D32?style=for-the-badge)
 ![Colab](https://img.shields.io/badge/Training-Google_Colab-F9AB00?style=for-the-badge&logo=googlecolab&logoColor=white)
 
+[Video](#-promo-video) •
 [Screenshots](#-screenshots) •
 [Features](#-features) •
 [Quick start](#-quick-start) •
@@ -32,7 +33,13 @@
 
 <br>
 
-<img src="docs/screenshots/04_race_results.svg" alt="Race results for a simulated Singapore Grand Prix" width="850">
+### 🎬 Promo Video
+
+<a href="docs/video/f1-race-prediction-promo.mp4">
+  <img src="docs/video/promo-poster.jpg" alt="Watch the F1 Race Prediction promo video" width="850">
+</a>
+
+<sub>▶ Click the image to watch the 50-second promo (1080p, MP4).</sub>
 
 </div>
 
@@ -43,6 +50,7 @@
 
 ## 📋 Table of Contents
 
+- [🎬 Promo Video](#-promo-video)
 - [📸 Screenshots](#-screenshots)
 - [✨ Features](#-features)
 - [🚀 Quick Start](#-quick-start)
@@ -70,6 +78,11 @@
 ## 📸 Screenshots
 
 All screenshots are real output of `python main.py` for a dry **Singapore Grand Prix** (Marina Bay).
+
+<p align="center">
+  <b>Race results</b><br>
+  <img src="docs/screenshots/04_race_results.svg" alt="Race results for a simulated Singapore Grand Prix" width="850">
+</p>
 
 <table>
 <tr>
