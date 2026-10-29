@@ -31,6 +31,11 @@ class EnhancedRaceSimulator(RaceSimulator):
     REAL_DATA_WEIGHT = 0.50  # How much to weight real data vs simulation
     SIMULATION_WEIGHT = 0.25
     ML_WEIGHT = 0.25  # New: ML prediction weight
+    # Per-lap time gap that corresponds to one finishing position: the
+    # simulator's typical per-lap gap between consecutive finishers
+    # (measured ~0.6 s/lap at Monza, Monaco, Silverstone), so ML_WEIGHT
+    # is the share of that gap the ML can shift.
+    ML_SECONDS_PER_POSITION = 0.6
     
     def __init__(self, track, drivers, teams, weather, real_data_enhancer=None, use_ml=True):
         super().__init__(track, drivers, teams, weather)
@@ -41,6 +46,8 @@ class EnhancedRaceSimulator(RaceSimulator):
         self.use_ml = use_ml and ML_AVAILABLE
         self.ml_predictor = None
         self.ml_predictions = None
+        # Per-lap pace offsets (seconds) derived from ML predictions, keyed by driver
+        self._ml_pace_offsets = {}
         
         if self.use_ml:
             try:
@@ -77,6 +84,52 @@ class EnhancedRaceSimulator(RaceSimulator):
                 self.ml_predictions = None
         
         return self.ml_predictions
+    
+    def _compute_ml_pace_offsets(self) -> Dict:
+        """
+        Compute per-lap pace offsets in seconds from ML predictions.
+        
+        For each driver the ML prediction gives a distribution over finishing
+        positions. The expected position is converted to a per-lap time offset,
+        centred on the field mean so the offsets sum to ~0 and nobody is
+        artificially slowed down. A positive offset means slower, i.e. the ML
+        expects the driver to finish further back than the field average.
+        
+        Returns:
+            Dict mapping driver -> offset in seconds per lap
+        """
+        if not self.use_ml:
+            return {}
+        
+        predictions = self.get_ml_predictions()
+        if not predictions or not self.grid_positions:
+            return {}
+        
+        # Expected finishing position per driver from the ML probability
+        # distribution (predictions align with grid positions by index)
+        expected_positions = {}
+        for pred, driver in zip(predictions, self.grid_positions):
+            expected = sum(pos * p for pos, p in pred.position_probabilities.items())
+            expected_positions[driver] = expected
+        
+        # Centre on the field mean so the offsets sum to ~0
+        mean_expected = sum(expected_positions.values()) / len(expected_positions)
+        
+        offsets = {}
+        for driver in self.grid_positions:
+            if driver not in expected_positions:
+                continue
+            # Positive offset = slower (ML expects the driver further back)
+            offsets[driver] = (self.ML_WEIGHT * 
+                               self.ML_SECONDS_PER_POSITION * 
+                               (expected_positions[driver] - mean_expected))
+        
+        if offsets:
+            min_offset = min(offsets.values())
+            max_offset = max(offsets.values())
+            logger.info(f"ML pace offsets applied: min={min_offset:+.3f}s/lap, max={max_offset:+.3f}s/lap")
+        
+        return offsets
     
     def get_ml_summary(self):
         """Get summary of ML predictions."""
@@ -115,9 +168,17 @@ class EnhancedRaceSimulator(RaceSimulator):
         
         return base_time
     
+    def _calculate_race_pace(self, driver, team, lap_number=1, tire_age=0):
+        """Calculate race pace with ML-derived per-lap pace offsets applied."""
+        base_time = super()._calculate_race_pace(driver, team, lap_number, tire_age)
+        return base_time + self._ml_pace_offsets.get(driver, 0.0)
+    
     def simulate_qualifying(self):
         """Enhanced qualifying simulation with real data consideration for 2026."""
         print("🏎️ Running enhanced qualifying simulation...")
+        
+        # Qualifying can be re-run, so predictions from a previous grid are stale
+        self.ml_predictions = None
         
         # Get base qualifying results (list of drivers)
         grid_drivers = super().simulate_qualifying()
@@ -197,6 +258,12 @@ class EnhancedRaceSimulator(RaceSimulator):
     def simulate_race(self):
         """Enhanced race simulation with real data insights for 2026."""
         print("🏁 Running enhanced race simulation...")
+        
+        # Ensure the grid exists before applying ML pace offsets,
+        # so the offsets always match the grid that the race runs on
+        if not self.grid_positions:
+            self.simulate_qualifying()
+        self._ml_pace_offsets = self._compute_ml_pace_offsets()
         
         # Get base race results
         results = super().simulate_race()
@@ -335,7 +402,9 @@ class EnhancedRaceSimulator(RaceSimulator):
             'track_insights_available': bool(self.track_insights),
             'simulation_type': 'Enhanced with Real F1 Data (2026 Regulations)',
             'real_data_weight': self.REAL_DATA_WEIGHT,
-            'simulation_weight': self.SIMULATION_WEIGHT
+            'simulation_weight': self.SIMULATION_WEIGHT,
+            'ml_weight': self.ML_WEIGHT,
+            'ml_pace_applied': bool(self._ml_pace_offsets)
         }
         
         if self.real_data_enhancer:
@@ -347,8 +416,6 @@ class EnhancedRaceSimulator(RaceSimulator):
                 'teams_with_real_data': len(real_team_data),
                 'track_lap_times_available': len(self.track_insights.get('lap_times', {}))
             })
-        
-        return metadata
         
         return metadata
 
