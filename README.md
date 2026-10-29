@@ -366,50 +366,41 @@ def generate_weather(track, month):
 
 ### 5. Real Data Integration Layer
 
-#### Fast-F1 API Integration
+#### Real Data Sources (no F1 account needed)
+
+FastF1's own timing data (`Session.load()`) now requires an F1 TV account sign-in, so the simulator does not use it. Instead:
+
+- **Event schedule** comes from `fastf1.get_event_schedule()` (no sign-in).
+- **Race results and lap-by-lap times** come from the [Jolpica](https://api.jolpi.ca) (Ergast) API through `fastf1.ergast` (no sign-in).
 
 ```python
 class RealDataProvider:
-    """
-    Fetches and processes real F1 telemetry data.
-    
-    Data Sources:
-    - Official F1 timing data
-    - Telemetry streams
-    - Historical session data
-    
-    Caching:
-    - SQLite cache for performance
-    - Multi-year data aggregation
-    """
-    
-    def get_driver_performance_metrics(self, years=[2024, 2023, 2022]):
-        """
-        Aggregate driver metrics across multiple seasons.
-        
-        Metrics extracted:
-        - Mean lap time (normalized)
-        - Lap time consistency (std deviation)
-        - Grid vs race position delta
-        - Points per race average
-        """
-        for year in years:
-            schedule = fastf1.get_event_schedule(year)
-            for event in schedule.tail(5):  # Last 5 races per year
-                session = fastf1.get_session(year, event['EventName'], 'R')
-                session.load()
-                
-                for driver in session.drivers:
-                    laps = session.laps.pick_driver(driver).pick_quicklaps()
-                    self.aggregate_driver_stats(driver, laps)
+    def __init__(self):
+        self.last_season_year = self.current_year - 1   # most recent completed season
+
+    def _load_race(self, year, round_number):
+        """Results + every lap time of one race (lap times are paged, 100 per request)."""
+
+    def get_driver_performance_data(self):
+        """Last 5 races of the last two seasons: quick-lap times (within 107%
+        of the fastest lap), consistency, grid vs race position."""
+
+    def get_team_performance_data(self):
+        """Last 3 races of the last season: points, positions, DNFs."""
+
+    def get_track_specific_data(self, track_name, city=None):
+        """Mean quick-lap time per driver at this circuit last season.
+        The circuit is matched to the event by city (FastF1 'Location')."""
 ```
+
+All responses are cached in `cache/`, so only the first run downloads data (about 125 requests, roughly 2 minutes). Jolpica allows about 200 requests per hour.
 
 #### Hybrid Prediction Model
 
 `EnhancedRaceSimulator` combines three sources:
 
 1. **Monte Carlo simulation** – every lap time comes from `_calculate_race_pace` (driver/car ratings, tyres, fuel, weather, randomness).
-2. **Real Fast-F1 data** – adjusts the qualifying order, shifts race pace by each driver's real gap to the field at this track, and applies post-race adjustments (overtaking, tyre management, consistency, reliability).
+2. **Real F1 data (Jolpica)** – adjusts the qualifying order, shifts race pace by each driver's real gap to the field at this track, and applies post-race adjustments (overtaking, tyre management, consistency, reliability).
 3. **ML model** – before the race, each driver's ML expected finishing position becomes a per-lap pace offset, centred on the field:
 
 ```python

@@ -1,17 +1,21 @@
 """
 Real F1 Data Integration using Fast-F1 library.
 
-This module fetches real Formula 1 data from the official F1 API using Fast-F1
-and integrates it with the simulation to provide more realistic race predictions.
+This module fetches real Formula 1 data (event schedules from Fast-F1, race
+results and lap times from the Jolpica/Ergast API through Fast-F1) and
+integrates it with the simulation to provide more realistic race predictions.
 """
 
 import fastf1
+from fastf1.ergast import Ergast
+from fastf1.exceptions import ErgastInvalidRequestError
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 import logging
 from typing import Dict, List, Optional, Tuple
 import warnings
+import time
 import sys
 import os
 
@@ -54,14 +58,52 @@ if not os.path.exists(cache_dir):
 with suppress_fastf1_logging():
     fastf1.Cache.enable_cache(cache_dir)
 
+# Results and lap times come from the Jolpica (Ergast) API, which needs no
+# F1 account sign-in, unlike FastF1's own timing data (Session.load)
+ergast = Ergast(result_type='pandas', auto_cast=True)
+ERGAST_PAGE_SIZE = 100  # maximum page size the API allows
+
+ERGAST_RETRIES = 3  # the API rejects bursts of requests, so retry after a pause
+
+
+def ergast_call(method, **kwargs):
+    """Call an Ergast API method, retrying when the server rejects a burst."""
+    for attempt in range(ERGAST_RETRIES):
+        try:
+            return method(**kwargs)
+        except ErgastInvalidRequestError:
+            if attempt == ERGAST_RETRIES - 1:
+                raise
+            time.sleep(5 * (attempt + 1))
+
+
+# Laps slower than this multiple of the fastest lap are not representative
+QUICKLAP_THRESHOLD = 1.07
+
+# Ergast constructorId -> 2026 team name, where the team was renamed
+CONSTRUCTOR_ALIASES = {
+    'rb': 'Racing Bulls',
+    'sauber': 'Audi',
+}
+
+# Track city -> FastF1 event 'Location' where the two differ
+FASTF1_LOCATION_ALIASES = {
+    'miami': 'miami gardens',
+    'montreal': 'montréal',
+    'monte carlo': 'monaco',
+    'spa': 'spa-francorchamps',
+    'singapore': 'marina bay',
+    'abu dhabi': 'yas island',
+}
+
 
 class RealDataProvider:
     """Provides real F1 data from Fast-F1 API."""
     
     def __init__(self):
         self.current_year = datetime.now().year
-        # Always use the previous year for more reliable data availability
-        self.last_season_year = 2024  # Use 2024 data which is more reliable
+        # Use the most recent completed season
+        self.last_season_year = self.current_year - 1
         
     def get_current_season_schedule(self) -> pd.DataFrame:
         """Get the current F1 season schedule."""
@@ -84,88 +126,95 @@ class RealDataProvider:
         
         return loading_with_animation("Fetching F1 season schedule", _fetch_schedule)
     
-    def get_recent_session(self, session_type: str = 'R') -> Optional[fastf1.core.Session]:
+    def _load_race(self, year: int, round_number: int) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
-        Get the most recent completed session.
-        
-        Args:
-            session_type: 'R' for Race, 'Q' for Qualifying, 'FP1', 'FP2', 'FP3' for Practice
+        Load race results and lap times from the Jolpica (Ergast) API.
+
+        FastF1's own timing data needs an F1 account sign-in, Jolpica does not.
+
+        Returns:
+            (results, laps). results has one row per driver (driverCode,
+            constructorId, constructorName, grid, position, points, status).
+            laps has one row per driver per lap (driverCode, lap, position,
+            seconds).
         """
-        try:
-            schedule = self.get_current_season_schedule()
-            if schedule.empty:
-                return None
-                
-            # Get completed events (past dates)
-            now = pd.Timestamp.now(tz='UTC')
-            completed_events = schedule[schedule['Session5DateUtc'] < now]
-            
-            if completed_events.empty:
-                # No completed events this year, try last year
-                schedule = fastf1.get_event_schedule(self.last_season_year)
-                completed_events = schedule
-                
-            if completed_events.empty:
-                return None
-                
-            # Get the most recent event
-            latest_event = completed_events.iloc[-1]
-            
-            try:
-                session = fastf1.get_session(
-                    latest_event.name if hasattr(latest_event, 'name') else self.last_season_year,
-                    latest_event['EventName'],
-                    session_type
-                )
-                session.load()
-                return session
-            except Exception as e:
-                logger.warning(f"Could not load recent session: {e}")
-                return None
-                
-        except Exception as e:
-            logger.error(f"Error getting recent session: {e}")
-            return None
-    
+        results = ergast_call(ergast.get_race_results, season=year, round=round_number).content[0]
+
+        # The API returns at most 100 laps per request, so page through them
+        pages = []
+        offset = 0
+        while True:
+            response = ergast_call(ergast.get_lap_times, season=year, round=round_number,
+                                   limit=ERGAST_PAGE_SIZE, offset=offset)
+            if response.content:
+                pages.append(response.content[0])
+            offset += ERGAST_PAGE_SIZE
+            if offset >= response.total_results:
+                break
+
+        laps = pd.concat(pages, ignore_index=True) if pages else pd.DataFrame(
+            columns=['number', 'driverId', 'position', 'time'])
+        codes = results.set_index('driverId')['driverCode']
+        laps = pd.DataFrame({
+            'driverCode': laps['driverId'].map(codes),
+            'lap': laps['number'],
+            'position': laps['position'],
+            'seconds': pd.to_timedelta(laps['time']).dt.total_seconds(),
+        }).dropna(subset=['driverCode', 'seconds'])
+        return results, laps
+
+    @staticmethod
+    def _quick_laps(laps: pd.DataFrame) -> pd.DataFrame:
+        """Keep laps within 107% of the race's fastest lap.
+
+        Drops pit in/out laps, safety car laps and the standing start lap,
+        like FastF1's pick_quicklaps.
+        """
+        if laps.empty:
+            return laps
+        return laps[laps['seconds'] <= laps['seconds'].min() * QUICKLAP_THRESHOLD]
+
+    def _recent_races(self, year: int, count: int) -> pd.DataFrame:
+        """Last `count` race events of a season (pre-season testing excluded)."""
+        schedule = fastf1.get_event_schedule(year)
+        return schedule[schedule['EventFormat'] != 'testing'].tail(count)
+
     def get_driver_performance_data(self, year: Optional[int] = None) -> Dict[str, Dict]:
         """
-        Extract real driver performance data from recent sessions.
-        
+        Extract real driver performance data from recent races.
+
         Returns:
             Dictionary with driver performance metrics
         """
         def _fetch_driver_data():
             driver_stats = {}
-            
+
             try:
                 # Try to get data from multiple recent years for better statistics
-                years_to_try = [2024, 2023, 2022]  # Try multiple years for more data
-                
+                years_to_try = [self.last_season_year, self.last_season_year - 1]
+
                 for year in years_to_try:
                     try:
-                        schedule = fastf1.get_event_schedule(year)
-                        
                         # Get last few races for statistics
-                        recent_races = schedule.tail(5)  # Last 5 races from each year
-                        
+                        recent_races = self._recent_races(year, 5)
+
                         for _, event in recent_races.iterrows():
                             try:
-                                session = fastf1.get_session(year, event['EventName'], 'R')
-                                session.load()
-                                
-                                if session.laps is None or session.laps.empty:
+                                results, laps = self._load_race(year, int(event['RoundNumber']))
+
+                                if laps.empty:
                                     continue
-                                    
+
+                                quick_laps = self._quick_laps(laps)
+
                                 # Extract driver performance metrics
-                                for driver_num in session.results['DriverNumber']:
-                                    driver_laps = session.laps.pick_driver(driver_num)
-                                    
+                                for _, driver_result in results.iterrows():
+                                    driver_name = driver_result['driverCode']
+                                    driver_laps = laps[laps['driverCode'] == driver_name]
+
                                     if driver_laps.empty:
                                         continue
-                                        
-                                    driver_info = session.get_driver(driver_num)
-                                    driver_name = driver_info['Abbreviation']
-                                    
+
                                     if driver_name not in driver_stats:
                                         driver_stats[driver_name] = {
                                             'lap_times': [],
@@ -177,74 +226,63 @@ class RealDataProvider:
                                             'race_positions': [],
                                             'total_races': 0
                                         }
-                                    
+
                                     # Collect lap times (exclude outliers)
-                                    valid_laps = driver_laps.pick_quicklaps()
-                                    if not valid_laps.empty:
-                                        lap_times = valid_laps['LapTime'].dt.total_seconds()
+                                    lap_times = quick_laps.loc[quick_laps['driverCode'] == driver_name, 'seconds']
+                                    if not lap_times.empty:
                                         driver_stats[driver_name]['lap_times'].extend(lap_times.tolist())
-                                        
+
                                         # Calculate consistency (lower std deviation = more consistent)
                                         if len(lap_times) > 1:
                                             consistency = 100 - (np.std(lap_times) * 10)  # Scale to 0-100
                                             driver_stats[driver_name]['consistency_scores'].append(max(0, min(100, consistency)))
-                                    
+
                                     # Track positions throughout race
-                                    positions = driver_laps['Position'].dropna()
+                                    positions = driver_laps['position'].dropna()
                                     if not positions.empty:
                                         driver_stats[driver_name]['positions'].extend(positions.tolist())
-                                    
-                                    # Get qualifying and race positions
-                                    try:
-                                        grid_pos = session.results.loc[session.results['DriverNumber'] == driver_num, 'GridPosition'].iloc[0]
-                                        race_pos = session.results.loc[session.results['DriverNumber'] == driver_num, 'Position'].iloc[0]
-                                        
-                                        if pd.notna(grid_pos):
-                                            driver_stats[driver_name]['grid_positions'].append(float(grid_pos))
-                                        if pd.notna(race_pos):
-                                            driver_stats[driver_name]['race_positions'].append(float(race_pos))
-                                    except:
-                                        pass
-                                    
+
+                                    # Get grid and race positions (grid 0 = pit lane start)
+                                    if pd.notna(driver_result['grid']) and driver_result['grid'] > 0:
+                                        driver_stats[driver_name]['grid_positions'].append(float(driver_result['grid']))
+                                    if pd.notna(driver_result['position']):
+                                        driver_stats[driver_name]['race_positions'].append(float(driver_result['position']))
+
                                     driver_stats[driver_name]['total_races'] += 1
-                                    
+
                             except Exception as e:
                                 logger.warning(f"Could not process event {event['EventName']} in {year}: {e}")
                                 continue
-                                
+
                     except Exception as e:
                         logger.warning(f"Could not get schedule for {year}: {e}")
                         continue
-                        
+
             except Exception as e:
                 logger.error(f"Error extracting driver performance data: {e}")
-                
+
             return driver_stats
-        
+
         return loading_with_animation("Analyzing driver performance data", _fetch_driver_data)
-    
+
     def get_team_performance_data(self, year: Optional[int] = None) -> Dict[str, Dict]:
         """Extract real team performance data."""
         if year is None:
             year = self.last_season_year
-            
+
         team_stats = {}
-        
+
         try:
-            schedule = fastf1.get_event_schedule(year)
-            recent_races = schedule.tail(3)
-            
+            recent_races = self._recent_races(year, 3)
+
             for _, event in recent_races.iterrows():
                 try:
-                    session = fastf1.get_session(year, event['EventName'], 'R')
-                    session.load()
-                    
-                    if session.results is None or session.results.empty:
-                        continue
-                        
-                    for _, driver_result in session.results.iterrows():
-                        team_name = driver_result['TeamName']
-                        
+                    results = ergast_call(ergast.get_race_results, season=year, round=int(event['RoundNumber'])).content[0]
+
+                    for _, driver_result in results.iterrows():
+                        team_name = CONSTRUCTOR_ALIASES.get(driver_result['constructorId'],
+                                                            driver_result['constructorName'])
+
                         if team_name not in team_stats:
                             team_stats[team_name] = {
                                 'points': [],
@@ -254,92 +292,82 @@ class RealDataProvider:
                                 'total_races': 0,
                                 'pit_stop_times': []
                             }
-                        
+
                         # Track points and positions
-                        if pd.notna(driver_result.get('Points', 0)):
-                            team_stats[team_name]['points'].append(float(driver_result['Points']))
-                        
-                        if pd.notna(driver_result.get('GridPosition')):
-                            team_stats[team_name]['grid_positions'].append(float(driver_result['GridPosition']))
-                        
-                        if pd.notna(driver_result.get('Position')):
-                            team_stats[team_name]['race_positions'].append(float(driver_result['Position']))
-                        
-                        # Check for reliability issues (DNF)
-                        status = driver_result.get('Status', '')
-                        if 'DNF' in str(status) or 'Retired' in str(status):
+                        if pd.notna(driver_result['points']):
+                            team_stats[team_name]['points'].append(float(driver_result['points']))
+
+                        if pd.notna(driver_result['grid']) and driver_result['grid'] > 0:
+                            team_stats[team_name]['grid_positions'].append(float(driver_result['grid']))
+
+                        if pd.notna(driver_result['position']):
+                            team_stats[team_name]['race_positions'].append(float(driver_result['position']))
+
+                        # Check for reliability issues (DNF). Classified finishers
+                        # have status "Finished", "Lapped" or "+N Lap(s)".
+                        status = str(driver_result['status'])
+                        if status not in ('Finished', 'Lapped') and not status.startswith('+'):
                             team_stats[team_name]['reliability_issues'] += 1
-                        
+
                         team_stats[team_name]['total_races'] += 1
-                        
+
                 except Exception as e:
                     logger.warning(f"Could not process team data for event {event['EventName']}: {e}")
                     continue
-                    
+
         except Exception as e:
             logger.error(f"Error extracting team performance data: {e}")
-            
+
         return team_stats
-    
-    def get_track_specific_data(self, track_name: str, year: Optional[int] = None) -> Dict:
+
+    def get_track_specific_data(self, track_name: str, year: Optional[int] = None,
+                                city: Optional[str] = None) -> Dict:
         """Get track-specific performance data."""
         if year is None:
             year = self.last_season_year
-            
+
         track_data = {
             'lap_times': {},
             'weather_history': [],
             'tire_strategies': {},
             'overtaking_zones': []
         }
-        
+
         try:
             # Try to find the event for this track
             schedule = fastf1.get_event_schedule(year)
-            
-            # Find matching event (flexible matching)
+
+            # Match the circuit to an event. Event names are "<Country> Grand Prix",
+            # not circuit names, so match the track's city against the event
+            # Location, then fall back to a name substring match.
+            location = FASTF1_LOCATION_ALIASES.get(city.lower(), city.lower()) if city else None
+            races = schedule[schedule['EventFormat'] != 'testing']
             matching_event = None
-            for _, event in schedule.iterrows():
-                if track_name.lower() in event['EventName'].lower() or event['EventName'].lower() in track_name.lower():
+            for _, event in races.iterrows():
+                if location and str(event['Location']).lower() == location:
                     matching_event = event
                     break
-            
+            if matching_event is None:
+                for _, event in races.iterrows():
+                    if track_name.lower() in event['EventName'].lower() or event['EventName'].lower() in track_name.lower():
+                        matching_event = event
+                        break
+
             if matching_event is None:
                 logger.warning(f"Could not find event for track: {track_name}")
                 return track_data
-            
-            # Load race session
-            session = fastf1.get_session(year, matching_event['EventName'], 'R')
-            session.load()
-            
-            if session.laps is not None and not session.laps.empty:
-                # Extract lap times per driver
-                for driver_num in session.results['DriverNumber']:
-                    driver_laps = session.laps.pick_driver(driver_num)
-                    if not driver_laps.empty:
-                        driver_info = session.get_driver(driver_num)
-                        driver_name = driver_info['Abbreviation']
-                        
-                        valid_laps = driver_laps.pick_quicklaps()
-                        if not valid_laps.empty:
-                            lap_times = valid_laps['LapTime'].dt.total_seconds()
-                            track_data['lap_times'][driver_name] = lap_times.mean()
-                
-                # Extract weather data if available
-                if hasattr(session, 'weather_data') and session.weather_data is not None:
-                    weather = session.weather_data
-                    if not weather.empty:
-                        track_data['weather_history'] = {
-                            'avg_temp': weather['AirTemp'].mean() if 'AirTemp' in weather.columns else 20,
-                            'avg_humidity': weather['Humidity'].mean() if 'Humidity' in weather.columns else 50,
-                            'rain_probability': (weather['Rainfall'].sum() > 0) if 'Rainfall' in weather.columns else False
-                        }
-                
+
+            # Extract mean quick-lap time per driver
+            _, laps = self._load_race(year, int(matching_event['RoundNumber']))
+            quick_laps = self._quick_laps(laps)
+            if not quick_laps.empty:
+                track_data['lap_times'] = quick_laps.groupby('driverCode')['seconds'].mean().to_dict()
+
         except Exception as e:
             logger.warning(f"Could not extract track data for {track_name}: {e}")
-            
+
         return track_data
-    
+
     def calculate_realistic_driver_ratings(self) -> Dict[str, Dict]:
         """Calculate realistic driver ratings based on real performance data."""
         driver_perf_data = self.get_driver_performance_data()
@@ -541,9 +569,9 @@ class RealDataEnhancer:
         
         return enhanced_drivers, enhanced_teams
     
-    def get_track_insights(self, track_name: str) -> Dict:
+    def get_track_insights(self, track_name: str, city: Optional[str] = None) -> Dict:
         """Get real insights for track-specific predictions."""
-        return self.data_provider.get_track_specific_data(track_name)
+        return self.data_provider.get_track_specific_data(track_name, city=city)
     
     def _get_driver_abbreviation(self, full_name: str) -> str:
         """Convert full driver name to common abbreviation."""
@@ -565,7 +593,8 @@ class RealDataEnhancer:
             'Gabriel Bortoleto': 'BOR',
             'Isack Hadjar': 'HAD'
         }
-        return name_map.get(full_name, full_name[:3].upper())
+        # FIA codes are normally the first three letters of the surname
+        return name_map.get(full_name, full_name.split()[-1][:3].upper())
     
     def _clean_team_name(self, team_name: str) -> str:
         """Clean team name for matching."""

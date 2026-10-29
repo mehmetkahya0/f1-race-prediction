@@ -12,7 +12,7 @@ import numpy as np
 from dataclasses import dataclass
 from typing import List, Dict, Optional
 import logging
-from models.race_model import RaceSimulator, DriverRaceResult, RaceIncident, format_time
+from models.race_model import RaceSimulator, DriverRaceResult, RaceIncident, format_time, assign_points
 
 # Import ML predictor
 try:
@@ -61,7 +61,7 @@ class EnhancedRaceSimulator(RaceSimulator):
                 self.use_ml = False
         
         if real_data_enhancer:
-            self.track_insights = real_data_enhancer.get_track_insights(track.name)
+            self.track_insights = real_data_enhancer.get_track_insights(track.name, track.city)
             # Cache data for performance
             self._cached_driver_data = real_data_enhancer.get_enhanced_driver_data()
             self._cached_team_data = real_data_enhancer.get_enhanced_team_data()
@@ -335,6 +335,7 @@ class EnhancedRaceSimulator(RaceSimulator):
                     if result.incident != RaceIncident.NONE and random.random() < 0.15:
                         result.incident = RaceIncident.NONE
                         result.incident_description = ""
+                        result.incident_lap = None
                         result.status = 'Finished'
                 elif consistency < 72 and random.random() < 0.08:
                     # Less consistent drivers more likely to have issues
@@ -344,6 +345,7 @@ class EnhancedRaceSimulator(RaceSimulator):
                             RaceIncident.PUNCTURE
                         ])
                         result.incident_description = "Consistency issues led to incident"
+                        result.incident_lap = random.randint(1, self.track.laps)
             
             # Team-based adjustments  
             matching_team = None
@@ -370,6 +372,7 @@ class EnhancedRaceSimulator(RaceSimulator):
                             RaceIncident.ENERGY_SYSTEM_FAILURE
                         ])
                         result.incident_description = "Reliability concerns led to technical issue"
+                        result.incident_lap = random.randint(1, self.track.laps)
                         result.status = "DNF"
                         result.finishing_position = len(results)
         
@@ -389,6 +392,9 @@ class EnhancedRaceSimulator(RaceSimulator):
             result.positions_gained = result.starting_position - result.finishing_position
         
         all_results = finished_results + dnf_results
+        
+        # Positions and statuses changed above, so points must be recomputed
+        assign_points(all_results)
         
         logger.info(f"Applied real data adjustments to {len(all_results)} drivers")
         return all_results

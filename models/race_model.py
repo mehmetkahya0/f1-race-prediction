@@ -9,6 +9,7 @@ Updated for 2026 regulations with active aero and new power units.
 import random
 import numpy as np
 from dataclasses import dataclass
+from typing import Optional
 from enum import Enum
 
 from models.strategy import get_tire_strategy, simulate_pit_stop
@@ -39,6 +40,7 @@ class DriverRaceResult:
     fastest_lap: bool = False
     incident: RaceIncident = RaceIncident.NONE
     incident_description: str = ""
+    incident_lap: Optional[int] = None
     points: int = 0
     positions_gained: int = 0  # New metric
     pit_stops: int = 0
@@ -56,6 +58,18 @@ def format_time(time_seconds):
     seconds = int(time_seconds % 60)
     milliseconds = int((time_seconds - int(time_seconds)) * 1000)
     return f"{minutes}:{seconds:02d}.{milliseconds:03d}"
+
+
+# Points for P1-P10 (no fastest lap bonus point since 2025)
+POINTS_SYSTEM = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1]
+
+
+def assign_points(results):
+    """Set points from finishing position. Must be re-run whenever positions or statuses change."""
+    for result in results:
+        result.points = 0
+        if result.status == 'Finished' and result.finishing_position <= len(POINTS_SYSTEM):
+            result.points = POINTS_SYSTEM[result.finishing_position - 1]
 
 
 class RaceSimulator:
@@ -430,7 +444,7 @@ class RaceSimulator:
         # Initialize race variables
         total_laps = self.track.laps
         driver_status = {driver: {'active': True, 'incident': RaceIncident.NONE, 
-                                 'description': "", 'current_position': i+1,
+                                 'description': "", 'incident_lap': None, 'current_position': i+1,
                                  'tire_age': 0, 'pit_stops': 0} 
                         for i, driver in enumerate(self.grid_positions)}
         
@@ -517,6 +531,7 @@ class RaceSimulator:
                     driver_status[driver]['active'] = False
                     driver_status[driver]['incident'] = incident
                     driver_status[driver]['description'] = description
+                    driver_status[driver]['incident_lap'] = lap
             
             # Update positions based on race times
             active_drivers = [d for d in self.grid_positions if driver_status[d]['active']]
@@ -568,22 +583,14 @@ class RaceSimulator:
                 fastest_lap=(driver == fastest_lap['driver']),
                 incident=driver_status[driver]['incident'],
                 incident_description=driver_status[driver]['description'],
+                incident_lap=driver_status[driver]['incident_lap'],
                 positions_gained=positions_gained,
                 pit_stops=driver_status[driver]['pit_stops']
             )
             
-            # Calculate points (2026 system - same as current)
-            if status == 'Finished':
-                points_system = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1]
-                if position <= len(points_system):
-                    result.points = points_system[position-1]
-                    
-                # Add point for fastest lap if in top 10
-                if result.fastest_lap and position <= 10:
-                    result.points += 1
-            
             race_results.append(result)
-            
+        
+        assign_points(race_results)
         self.race_results = race_results
         self.race_simulated = True
         

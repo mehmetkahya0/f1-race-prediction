@@ -16,7 +16,8 @@ init()
 def display_race_header(track, weather):
     """Display a styled header for race information."""
     print("\n" + "=" * 80)
-    print(f"{Fore.CYAN}2025 FORMULA 1 GRAND PRIX - {track.name.upper()}{Style.RESET_ALL}")
+    season = track.date.split()[-1]  # e.g. "March 6-8, 2026" -> "2026"
+    print(f"{Fore.CYAN}{season} FORMULA 1 GRAND PRIX - {track.name.upper()}{Style.RESET_ALL}")
     print(f"Location: {track.city}, {track.country}")
     print(f"Track Length: {track.length_km}km - {track.laps} laps ({int(track.length_km * track.laps)}km)")
     print(f"Weather: {weather}")
@@ -84,7 +85,10 @@ def display_race_results(results):
     if incidents:
         print(f"\n{Fore.YELLOW}RACE INCIDENTS:{Style.RESET_ALL}")
         for incident in incidents:
-            print(f"  • Lap {incident.incident_description}")
+            if incident.incident_lap is not None:
+                print(f"  • Lap {incident.incident_lap}: {incident.incident_description}")
+            else:
+                print(f"  • {incident.incident_description}")
 
 def format_race_time(seconds):
     """Format race time in minutes:seconds.milliseconds format."""

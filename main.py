@@ -167,7 +167,7 @@ def run_race_simulation(track, weather_option):
         # Get track insights with loading animation
         track_insights = loading_with_animation(
             "Analyzing track-specific performance data",
-            lambda: real_data_enhancer.get_track_insights(track.name)
+            lambda: real_data_enhancer.get_track_insights(track.name, track.city)
         )
         if track_insights['lap_times']:
             print(f"• Track data available for {len(track_insights['lap_times'])} drivers")
